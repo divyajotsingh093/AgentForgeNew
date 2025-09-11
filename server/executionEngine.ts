@@ -36,6 +36,20 @@ class ExecutionEngine {
         try {
           if (step.kind === 'agent') {
             context = await this.executeAgentStepWithRetry(runId, run.sessionId, step, context);
+            
+            // Check if agent requested a tool call via structured output
+            const agent = await storage.getAgent(step.refId);
+            const toolCallKey = `${agent?.name}_tool_call`;
+            
+            if (context[toolCallKey] && typeof context[toolCallKey] === 'object') {
+              await this.logMessage(runId, 'info', { 
+                session: run.sessionId, 
+                agent: agent?.name,
+                step: step.idx.toString() 
+              }, `Auto-executing tool call requested by agent: ${agent?.name}`);
+              
+              context = await this.autoExecuteToolCall(runId, run.sessionId, context[toolCallKey], context, step.idx);
+            }
           } else if (step.kind === 'tool') {
             context = await this.executeToolStep(runId, run.sessionId, step, context);
           }
@@ -240,11 +254,8 @@ class ExecutionEngine {
         Object.keys(parsedOutput).forEach(key => {
           context[key] = parsedOutput[key];
           
-          await this.logMessage(runId, 'debug', {
-            session: sessionId,
-            agent: agent.name,
-            field: key
-          }, `Added structured field to context: ${key}`);
+          // Note: Debug log removed from forEach to avoid async issues
+          // We'll log the summary after the loop instead
         });
 
         await this.logMessage(runId, 'info', {
@@ -356,7 +367,10 @@ class ExecutionEngine {
       throw new Error(`Unknown tool type: ${tool.type}`);
     }
 
-    context[`${tool.name}_result`] = result;
+    // Store result with both underscore and dot naming for template compatibility
+    const underscoreName = tool.name.replace(/\./g, '_');
+    context[`${tool.name}_result`] = result; // Keep original format
+    context[`${underscoreName}_result`] = result; // Add underscore format for templates
     
     await this.logMessage(runId, 'info', { 
       session: sessionId, 
@@ -369,9 +383,42 @@ class ExecutionEngine {
 
   private async executeBuiltinTool(tool: Tool, context: any, simplified = false): Promise<any> {
     if (tool.name === 'notion.create_tasks') {
-      // Extract tasks from context
-      const tasks = this.extractTasksFromContext(context);
-      return await createNotionTasks(tasks);
+      // Use structured action_items from context if available, otherwise extract from text
+      let tasks = context.action_items || [];
+      
+      if (tasks.length === 0) {
+        // Fallback to text extraction if no structured data
+        tasks = this.extractTasksFromContext(context);
+      }
+      
+      // Normalize data shape: map {owner, task, due_by, priority, notes} to {title, owner, due, priority, notes}
+      const normalizedTasks = tasks.map((task: any) => {
+        // Handle both structured and text-extracted formats
+        const normalizedTask: any = {
+          title: (task.task || task.title || '').trim() || 'Untitled Task',
+          owner: (task.owner || '').trim() || undefined,
+          due: (task.due_by || task.due || '').trim() || undefined,
+          priority: (task.priority || 'Medium').trim() as 'Low' | 'Medium' | 'High',
+          notes: (task.notes || '').trim() || undefined
+        };
+        
+        // Remove undefined/empty fields
+        Object.keys(normalizedTask).forEach(key => {
+          if (normalizedTask[key] === undefined || normalizedTask[key] === '') {
+            delete normalizedTask[key];
+          }
+        });
+        
+        return normalizedTask;
+      }).filter(task => task.title && task.title !== 'Untitled Task'); // Filter out empty tasks
+      
+      // Get database_id from tool spec, context, or environment
+      const databaseId = tool.spec?.database_id || 
+                        context.notion_database_id || 
+                        process.env.NOTION_DATABASE_ID || 
+                        null;
+      
+      return await createNotionTasks(normalizedTasks, databaseId);
     }
     
     // Add other builtin tools here
@@ -508,6 +555,131 @@ class ExecutionEngine {
     }
 
     return summary;
+  }
+
+  private async autoExecuteToolCall(
+    runId: string, 
+    sessionId: string, 
+    toolCall: any, 
+    context: any, 
+    agentStepIdx: number
+  ): Promise<any> {
+    try {
+      // Parse tool call structure
+      const toolName = toolCall.tool || toolCall.name;
+      const toolArgs = toolCall.args || toolCall.arguments || {};
+      
+      if (!toolName) {
+        throw new Error("Tool call missing tool name");
+      }
+      
+      // Check for deduplication - skip if tool is already executed or will be executed later
+      const underscoreName = toolName.replace(/\./g, '_');
+      if (context[`${toolName}_result`] || context[`${underscoreName}_result`] || context[`${toolName}_executed`]) {
+        await this.logMessage(runId, 'info', { 
+          session: sessionId,
+          tool: toolName,
+          step: `${agentStepIdx}-auto`
+        }, `Skipping auto-execution of ${toolName} - already executed or pending`);
+        return context;
+      }
+      
+      // Mark as being executed to prevent duplicate runs
+      context[`${toolName}_executed`] = true;
+      context[`${underscoreName}_executed`] = true;
+      
+      await this.logMessage(runId, 'info', { 
+        session: sessionId,
+        tool: toolName,
+        step: `${agentStepIdx}-auto`
+      }, `Auto-executing tool: ${toolName}`);
+      
+      // Find the tool by name in the project
+      const projectId = context.project_id || await this.getProjectIdFromContext(context);
+      const tools = projectId ? await storage.getTools(projectId) : [];
+      const tool = tools.find(t => t.name === toolName);
+      
+      if (!tool) {
+        // Try to create a dynamic builtin tool for common cases
+        const dynamicTool = this.createDynamicBuiltinTool(toolName, toolArgs);
+        if (!dynamicTool) {
+          throw new Error(`Tool '${toolName}' not found in project`);
+        }
+        
+        const result = await this.executeBuiltinTool(dynamicTool, context);
+        
+        // Store result in context with both naming conventions
+        context[`${toolName}_result`] = result;
+        context[`${underscoreName}_result`] = result;
+        
+        await this.logMessage(runId, 'info', { 
+          session: sessionId,
+          tool: toolName,
+          step: `${agentStepIdx}-auto`
+        }, `Auto-executed dynamic tool: ${toolName}`);
+        
+        return context;
+      }
+      
+      // Execute the found tool
+      let result;
+      if (tool.type === 'builtin') {
+        // Merge tool args into context for builtin tools
+        const mergedContext = { ...context, ...toolArgs };
+        result = await this.executeBuiltinTool(tool, mergedContext);
+      } else if (tool.type === 'http') {
+        result = await this.executeHttpTool(tool, { ...context, ...toolArgs });
+      } else if (tool.type === 'mcp') {
+        result = await this.executeMcpTool(tool, { ...context, ...toolArgs });
+      } else {
+        throw new Error(`Unknown tool type: ${tool.type}`);
+      }
+      
+      // Store result in context with both naming conventions
+      context[`${tool.name}_result`] = result;
+      context[`${underscoreName}_result`] = result;
+      
+      await this.logMessage(runId, 'info', { 
+        session: sessionId,
+        tool: tool.name,
+        step: `${agentStepIdx}-auto`
+      }, `Auto-executed tool: ${tool.name}`);
+      
+      return context;
+      
+    } catch (error) {
+      await this.logMessage(runId, 'error', { 
+        session: sessionId,
+        step: `${agentStepIdx}-auto`
+      }, `Auto-execution failed: ${(error as Error).message}`);
+      
+      // Store error in context but don't throw
+      context[`auto_tool_error`] = (error as Error).message;
+      return context;
+    }
+  }
+
+  private createDynamicBuiltinTool(toolName: string, toolArgs: any): Tool | null {
+    // Create dynamic builtin tools for common cases
+    if (toolName === 'notion.create_tasks') {
+      return {
+        id: 'dynamic-notion-create-tasks',
+        projectId: 'dynamic',
+        name: 'notion.create_tasks',
+        type: 'builtin',
+        spec: {
+          database_id: toolArgs.database_id || null
+        },
+        createdAt: new Date()
+      } as Tool;
+    }
+    
+    return null;
+  }
+
+  private async getProjectIdFromContext(context: any): Promise<string | null> {
+    // Try to extract project ID from context or from the current run
+    return context.project_id || null;
   }
 
   private async logMessage(runId: string, level: string, tags: Record<string, string>, message: string, payload?: any) {
