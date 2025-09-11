@@ -1,58 +1,44 @@
-import * as jose from 'jose';
 import type { Express, RequestHandler } from 'express';
 import { storage } from './storage';
 
-// Secure JWKS with proper key selection
-let JWKS: jose.GetKeyFunction<jose.JWTHeaderParameters, jose.FlattenedJWSInput> | null = null;
+// Dummy user data for development (matches frontend)
+const DUMMY_USER_PAYLOAD = {
+  sub: "auth0|dummy_user_123",
+  email: "demo@example.com",
+  name: "Demo User",
+  given_name: "Demo",
+  family_name: "User",
+  picture: "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y",
+  email_verified: true,
+};
 
-async function getJWKS(): Promise<jose.GetKeyFunction<jose.JWTHeaderParameters, jose.FlattenedJWSInput>> {
-  if (!process.env.AUTH0_DOMAIN) {
-    throw new Error('AUTH0_DOMAIN environment variable is required');
+// Dummy token verification - always returns the same user
+async function verifyDummyToken(token: string): Promise<typeof DUMMY_USER_PAYLOAD> {
+  // In dummy mode, we just return the fake user regardless of token
+  // You could add some basic validation here if needed (e.g., token must equal specific value)
+  if (token === "dummy_jwt_token_for_development") {
+    return DUMMY_USER_PAYLOAD;
   }
   
-  if (!JWKS) {
-    const jwksUri = `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`;
-    JWKS = jose.createRemoteJWKSet(new URL(jwksUri));
-  }
-  
-  return JWKS;
-}
-
-async function verifyAuth0Token(token: string): Promise<jose.JWTPayload> {
-  if (!process.env.AUTH0_DOMAIN) {
-    throw new Error('AUTH0_DOMAIN environment variable is required');
-  }
-  
-  if (!process.env.AUTH0_AUDIENCE) {
-    throw new Error('AUTH0_AUDIENCE environment variable is required');
-  }
-
-  try {
-    const JWKS = await getJWKS();
-    
-    const { payload } = await jose.jwtVerify(token, JWKS, {
-      issuer: `https://${process.env.AUTH0_DOMAIN}/`,
-      audience: process.env.AUTH0_AUDIENCE,
-      algorithms: ['RS256'],
-    });
-
-    return payload;
-  } catch (error) {
-    console.error('Token verification failed:', error);
-    throw new Error('Invalid token');
-  }
+  // For development, accept any token and return dummy user
+  console.log('⚠️  Dummy auth: Accepting any token and returning demo user');
+  return DUMMY_USER_PAYLOAD;
 }
 
 export const isAuthenticated: RequestHandler = async (req: any, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
+    // For dummy authentication, we don't require a proper Bearer token
+    let payload = DUMMY_USER_PAYLOAD;
     
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ message: 'No authorization header provided' });
+    // Optional: Check for authorization header and token if provided
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+      payload = await verifyDummyToken(token);
+    } else {
+      // If no auth header, still proceed with dummy user for development
+      console.log('⚠️  Dummy auth: No authorization header, using demo user');
     }
-
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-    const payload = await verifyAuth0Token(token);
     
     // Store user info in request for use in routes
     req.user = {
@@ -72,13 +58,24 @@ export const isAuthenticated: RequestHandler = async (req: any, res, next) => {
       profileImageUrl: payload.picture as string,
     };
     
-    // Use the Auth0 subject as the user ID
+    // Create/update dummy user in database
     await storage.upsertUser(userData);
 
     next();
   } catch (error) {
-    console.error('Authentication error:', error);
-    res.status(401).json({ message: 'Unauthorized' });
+    console.error('Dummy authentication error:', error);
+    // In dummy mode, still proceed even if there's an error
+    console.log('⚠️  Dummy auth: Error occurred, but proceeding anyway for development');
+    
+    req.user = {
+      id: DUMMY_USER_PAYLOAD.sub,
+      email: DUMMY_USER_PAYLOAD.email,
+      name: DUMMY_USER_PAYLOAD.name,
+      picture: DUMMY_USER_PAYLOAD.picture,
+      claims: DUMMY_USER_PAYLOAD
+    };
+    
+    next();
   }
 };
 
@@ -87,9 +84,13 @@ export function setupAuth(app: Express) {
   app.get('/api/auth/health', (req, res) => {
     res.json({ 
       status: 'ok', 
-      domain: process.env.AUTH0_DOMAIN,
-      audience: process.env.AUTH0_AUDIENCE,
-      configured: !!(process.env.AUTH0_DOMAIN && process.env.AUTH0_AUDIENCE)
+      mode: 'dummy_auth_development',
+      message: '⚠️  Using dummy authentication for development - all requests authenticated as demo user',
+      dummy_user: {
+        id: DUMMY_USER_PAYLOAD.sub,
+        email: DUMMY_USER_PAYLOAD.email,
+        name: DUMMY_USER_PAYLOAD.name
+      }
     });
   });
 }
