@@ -1,7 +1,24 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import TemplateInstantiationModal from "@/components/modals/template-instantiation-modal";
+import type { Template } from "@shared/schema";
 
 export default function ComponentLibrary() {
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [showInstantiationModal, setShowInstantiationModal] = useState(false);
+
+  // Fetch real templates from API
+  const { data: templates = [] } = useQuery<Template[]>({
+    queryKey: ["/api/templates"],
+  });
+
+  const handleTemplateClick = (template: Template) => {
+    setSelectedTemplate(template);
+    setShowInstantiationModal(true);
+  };
+
   const agents = [
     {
       id: "transcriber",
@@ -50,23 +67,7 @@ export default function ComponentLibrary() {
     }
   ];
 
-  const templates = [
-    {
-      id: "meeting-action",
-      name: "Meeting → Action",
-      description: "Transform meetings into tasks"
-    },
-    {
-      id: "invoice-processing", 
-      name: "Invoice Processing",
-      description: "OCR and categorize invoices"
-    },
-    {
-      id: "content-pipeline",
-      name: "Content Pipeline", 
-      description: "SEO and content creation"
-    }
-  ];
+  // Templates are now fetched from API above
 
   return (
     <div className="w-80 bg-card border-r border-border flex flex-col">
@@ -171,6 +172,7 @@ export default function ComponentLibrary() {
               <Card
                 key={template.id}
                 className="p-3 cursor-pointer hover:border-primary transition-colors"
+                onClick={() => handleTemplateClick(template)}
                 data-testid={`template-${template.id}`}
               >
                 <CardContent className="p-0">
@@ -182,6 +184,16 @@ export default function ComponentLibrary() {
           </div>
         </div>
       </div>
+
+      {/* Template Instantiation Modal */}
+      <TemplateInstantiationModal
+        template={selectedTemplate}
+        open={showInstantiationModal}
+        onClose={() => {
+          setShowInstantiationModal(false);
+          setSelectedTemplate(null);
+        }}
+      />
     </div>
   );
 }

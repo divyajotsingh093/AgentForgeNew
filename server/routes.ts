@@ -240,6 +240,145 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Template instantiation route
+  app.post('/api/templates/:templateId/instantiate', isAuthenticated, async (req: any, res) => {
+    try {
+      const { templateId } = req.params;
+      const { projectId, name, description, config } = req.body;
+      const userId = req.user.claims.sub;
+
+      // Validate required parameters
+      if (!projectId) {
+        return res.status(400).json({ message: "Project ID is required" });
+      }
+
+      // Get the template
+      const template = await storage.getTemplate(templateId);
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+
+      // Validate project belongs to user
+      const project = await storage.getProject(projectId);
+      if (!project || project.userId !== userId) {
+        return res.status(403).json({ message: "Project access denied" });
+      }
+
+      // Extract template data
+      const templateData = template.templateData as any;
+      
+      // Create the flow
+      const flowName = name || `${template.name} - ${new Date().toLocaleDateString()}`;
+      const flowDescription = description || template.description;
+      
+      const flowData = insertFlowSchema.parse({
+        projectId,
+        name: flowName,
+        description: flowDescription,
+        inputSchema: templateData.inputSchema,
+        outputSchema: templateData.outputSchema,
+      });
+
+      const createdFlow = await storage.createFlow(flowData);
+
+      // Create agents from template
+      const agentMap = new Map<string, string>(); // template name -> database id
+      for (const templateAgent of templateData.agents || []) {
+        const agentData = insertAgentSchema.parse({
+          projectId,
+          name: templateAgent.name,
+          description: templateAgent.description,
+          systemPrompt: templateAgent.systemPrompt,
+          userTemplate: templateAgent.userTemplate,
+          fewShots: templateAgent.fewShots || null,
+          inputSchema: templateAgent.inputSchema,
+          outputSchema: templateAgent.outputSchema,
+        });
+
+        const createdAgent = await storage.createAgent(agentData);
+        agentMap.set(templateAgent.name, createdAgent.id);
+      }
+
+      // Create tools from template
+      const toolMap = new Map<string, string>(); // template name -> database id
+      for (const templateTool of templateData.tools || []) {
+        // Apply configuration overrides (like database_id for Notion)
+        let toolSpec = { ...templateTool.spec };
+        if (config && config.notion_database_id && templateTool.name === 'notion.create_tasks') {
+          toolSpec.inputSchema.properties.database_id.default = config.notion_database_id;
+        }
+
+        const toolData = insertToolSchema.parse({
+          projectId,
+          name: templateTool.name,
+          type: templateTool.type,
+          spec: toolSpec,
+        });
+
+        const createdTool = await storage.createTool(toolData);
+        toolMap.set(templateTool.name, createdTool.id);
+      }
+
+      // Create steps from template
+      for (const templateStep of templateData.steps || []) {
+        let refId: string;
+
+        if (templateStep.kind === 'agent') {
+          refId = agentMap.get(templateStep.name);
+        } else if (templateStep.kind === 'tool') {
+          refId = toolMap.get(templateStep.name);
+        } else {
+          throw new Error(`Unknown step kind: ${templateStep.kind}`);
+        }
+
+        if (!refId) {
+          throw new Error(`Reference not found for step: ${templateStep.name}`);
+        }
+
+        // Apply step configuration
+        let stepConfig = templateStep.config || {};
+        if (config && config.export_target) {
+          stepConfig.export_target = config.export_target;
+        }
+
+        const stepData = insertStepSchema.parse({
+          flowId: createdFlow.id,
+          idx: templateStep.idx,
+          kind: templateStep.kind,
+          refId,
+          config: stepConfig,
+        });
+
+        await storage.createStep(stepData);
+      }
+
+      // Create secrets if needed
+      if (templateData.secrets && config && config.secrets) {
+        for (const secretTemplate of templateData.secrets) {
+          if (config.secrets[secretTemplate.key]) {
+            const secretData = insertSecretSchema.parse({
+              projectId,
+              key: secretTemplate.key,
+              valueEnc: config.secrets[secretTemplate.key], // In real implementation, this would be encrypted
+            });
+
+            await storage.createSecret(secretData);
+          }
+        }
+      }
+
+      res.json({ 
+        success: true,
+        flowId: createdFlow.id,
+        flow: createdFlow,
+        message: "Template instantiated successfully"
+      });
+    } catch (error) {
+      console.error("Error instantiating template:", error);
+      res.status(500).json({ message: "Failed to instantiate template" });
+    }
+  });
+
   // Text-to-Agent route
   app.post('/api/text-to-agent', isAuthenticated, async (req, res) => {
     try {

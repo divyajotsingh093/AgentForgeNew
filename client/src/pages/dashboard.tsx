@@ -1,16 +1,81 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import TemplateInstantiationModal from "@/components/modals/template-instantiation-modal";
+import { apiRequest } from "@/lib/queryClient";
+import type { Template } from "@shared/schema";
 
 export default function Dashboard() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
+  const queryClient = useQueryClient();
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [showInstantiationModal, setShowInstantiationModal] = useState(false);
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  const [projectForm, setProjectForm] = useState({
+    name: "",
+    description: ""
+  });
+
+  // Fetch real templates from API
+  const { data: templates = [] } = useQuery<Template[]>({
+    queryKey: ["/api/templates"],
+  });
+
+  const handleTemplateClick = (template: Template) => {
+    setSelectedTemplate(template);
+    setShowInstantiationModal(true);
+  };
+
+  const createProjectMutation = useMutation({
+    mutationFn: async (data: { name: string; description: string }) => {
+      const slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const response = await apiRequest('POST', '/api/projects', {
+        name: data.name,
+        slug: slug,
+        description: data.description
+      });
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Project Created!",
+        description: "Your new project has been created successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+      setShowProjectModal(false);
+      setProjectForm({ name: "", description: "" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to create project",
+        description: error.message || "Something went wrong",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCreateProject = () => {
+    if (!projectForm.name.trim()) {
+      toast({
+        title: "Project name required",
+        description: "Please enter a name for your project",
+        variant: "destructive",
+      });
+      return;
+    }
+    createProjectMutation.mutate(projectForm);
+  };
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -76,6 +141,7 @@ export default function Dashboard() {
               </div>
               <Button 
                 className="bg-primary text-primary-foreground hover:opacity-90"
+                onClick={() => setShowProjectModal(true)}
                 data-testid="button-new-project"
               >
                 <i className="fas fa-plus mr-2"></i>
@@ -193,55 +259,111 @@ export default function Dashboard() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card className="cursor-pointer hover:shadow-md transition-shadow" data-testid="card-template-meeting">
-                  <CardHeader>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <i className="fas fa-users text-primary"></i>
-                      </div>
-                      <CardTitle className="text-lg">Meeting → Action</CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground text-sm">
-                      Transform meeting recordings into actionable tasks automatically
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card className="cursor-pointer hover:shadow-md transition-shadow" data-testid="card-template-invoice">
-                  <CardHeader>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-secondary/10 rounded-lg flex items-center justify-center">
-                        <i className="fas fa-file-invoice text-secondary"></i>
-                      </div>
-                      <CardTitle className="text-lg">Invoice Processing</CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground text-sm">
-                      OCR, categorize, and validate invoices with AI agents
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card className="cursor-pointer hover:shadow-md transition-shadow" data-testid="card-template-content">
-                  <CardHeader>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center">
-                        <i className="fas fa-edit text-accent"></i>
-                      </div>
-                      <CardTitle className="text-lg">Content Pipeline</CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground text-sm">
-                      Style, optimize, and schedule content across platforms
-                    </p>
-                  </CardContent>
-                </Card>
+                {templates.length > 0 ? (
+                  templates.map((template) => {
+                    // Template icon mapping
+                    const getTemplateIcon = (name: string) => {
+                      if (name.includes('Meeting')) return 'fas fa-users text-primary';
+                      if (name.includes('Invoice')) return 'fas fa-file-invoice text-secondary';
+                      if (name.includes('Content')) return 'fas fa-edit text-accent';
+                      return 'fas fa-cogs text-muted-foreground';
+                    };
+                    
+                    const getBgClass = (name: string) => {
+                      if (name.includes('Meeting')) return 'bg-primary/10';
+                      if (name.includes('Invoice')) return 'bg-secondary/10';
+                      if (name.includes('Content')) return 'bg-accent/10';
+                      return 'bg-muted/10';
+                    };
+                    
+                    return (
+                      <Card 
+                        key={template.id}
+                        className="cursor-pointer hover:shadow-md transition-shadow" 
+                        onClick={() => handleTemplateClick(template)}
+                        data-testid={`card-template-${template.id}`}
+                      >
+                        <CardHeader>
+                          <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 ${getBgClass(template.name)} rounded-lg flex items-center justify-center`}>
+                              <i className={getTemplateIcon(template.name)}></i>
+                            </div>
+                            <CardTitle className="text-lg">{template.name}</CardTitle>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-muted-foreground text-sm">
+                            {template.description}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    );
+                  })
+                ) : (
+                  <div className="col-span-3 text-center py-8">
+                    <p className="text-muted-foreground">Loading templates...</p>
+                  </div>
+                )}
               </div>
             </div>
+
+            {/* Project Creation Modal */}
+            <Dialog open={showProjectModal} onOpenChange={setShowProjectModal}>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Create New Project</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="project-name">Project Name *</Label>
+                    <Input
+                      id="project-name"
+                      value={projectForm.name}
+                      onChange={(e) => setProjectForm({...projectForm, name: e.target.value})}
+                      placeholder="My AI Project"
+                      data-testid="input-project-name"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="project-description">Description</Label>
+                    <Textarea
+                      id="project-description"
+                      value={projectForm.description}
+                      onChange={(e) => setProjectForm({...projectForm, description: e.target.value})}
+                      placeholder="Describe your project..."
+                      rows={3}
+                      data-testid="textarea-project-description"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-3 pt-4">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setShowProjectModal(false)}
+                      data-testid="button-cancel-project"
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleCreateProject}
+                      disabled={createProjectMutation.isPending}
+                      data-testid="button-create-project"
+                    >
+                      {createProjectMutation.isPending ? "Creating..." : "Create Project"}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Template Instantiation Modal */}
+            <TemplateInstantiationModal
+              template={selectedTemplate}
+              open={showInstantiationModal}
+              onClose={() => {
+                setShowInstantiationModal(false);
+                setSelectedTemplate(null);
+              }}
+            />
           </div>
         </main>
       </div>
