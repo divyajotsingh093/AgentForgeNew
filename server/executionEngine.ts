@@ -56,14 +56,14 @@ class ExecutionEngine {
             const agent = await storage.getAgent(step.refId);
             const toolCallKey = `${agent?.name}_tool_call`;
             
-            if (context[toolCallKey] && typeof context[toolCallKey] === 'object') {
+            if ((context as any)[toolCallKey] && typeof (context as any)[toolCallKey] === 'object') {
               await this.logMessage(runId, 'info', { 
                 session: run.sessionId, 
-                agent: agent?.name,
+                agent: agent?.name || 'unknown',
                 step: step.idx.toString() 
               }, `Auto-executing tool call requested by agent: ${agent?.name}`);
               
-              context = await this.autoExecuteToolCall(runId, run.sessionId, context[toolCallKey], context, step.idx);
+              context = await this.autoExecuteToolCall(runId, run.sessionId, (context as any)[toolCallKey], context, step.idx);
             }
           } else if (step.kind === 'tool') {
             context = await this.executeToolStep(runId, run.sessionId, step, context);
@@ -118,7 +118,7 @@ class ExecutionEngine {
         // Check if we got structured output - if not on first attempt, retry
         const agent = await storage.getAgent(step.refId);
         if (agent?.outputSchema && attempt === 1) {
-          const hasStructuredFields = Object.keys(agent.outputSchema.properties || {}).some(
+          const hasStructuredFields = Object.keys((agent.outputSchema as any)?.properties || {}).some(
             field => result.hasOwnProperty(field)
           );
           
@@ -425,10 +425,10 @@ class ExecutionEngine {
         });
         
         return normalizedTask;
-      }).filter(task => task.title && task.title !== 'Untitled Task'); // Filter out empty tasks
+      }).filter((task: any) => task.title && task.title !== 'Untitled Task'); // Filter out empty tasks
       
       // Get database_id from tool spec, context, or environment
-      const databaseId = tool.spec?.database_id || 
+      const databaseId = (tool.spec as any)?.database_id ||
                         context.notion_database_id || 
                         process.env.NOTION_DATABASE_ID || 
                         null;

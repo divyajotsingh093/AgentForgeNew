@@ -1,7 +1,6 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
 import { storage } from './storage';
-import { ExecutionEngine } from './executionEngine';
 
 export interface WSMessage {
   type: 'log' | 'status_update' | 'run_complete' | 'error';
@@ -123,12 +122,12 @@ export class WebSocketManager {
 
   private cleanupConnection(ws: WebSocket) {
     // Remove this connection from all subscriptions
-    for (const [runId, clients] of this.clients.entries()) {
+    this.clients.forEach((clients, runId) => {
       clients.delete(ws);
       if (clients.size === 0) {
         this.clients.delete(runId);
       }
-    }
+    });
   }
 
   // Called by ExecutionEngine to broadcast logs

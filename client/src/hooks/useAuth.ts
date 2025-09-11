@@ -1,14 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
+import { useAuth0 } from "@auth0/auth0-react";
 
 export function useAuth() {
-  const { data: user, isLoading } = useQuery({
-    queryKey: ["/api/auth/user"],
-    retry: false,
-  });
+  const { user, isLoading, isAuthenticated, loginWithRedirect, logout, getAccessTokenSilently } = useAuth0();
 
   return {
     user,
     isLoading,
-    isAuthenticated: !!user,
+    isAuthenticated,
+    login: loginWithRedirect,
+    logout: () => logout({ logoutParams: { returnTo: window.location.origin } }),
+    getAccessToken: getAccessTokenSilently,
   };
 }

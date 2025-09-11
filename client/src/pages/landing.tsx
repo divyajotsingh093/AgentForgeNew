@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Landing() {
+  const { login } = useAuth();
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -15,7 +17,7 @@ export default function Landing() {
               <span className="font-bold text-xl">AgentFlow</span>
             </div>
             <Button 
-              onClick={() => window.location.href = '/api/login'}
+              onClick={() => login()}
               className="bg-primary text-primary-foreground hover:opacity-90"
               data-testid="button-login"
             >
@@ -40,7 +42,7 @@ export default function Landing() {
             <div className="flex items-center justify-center gap-4">
               <Button 
                 size="lg"
-                onClick={() => window.location.href = '/api/login'}
+                onClick={() => login()}
                 className="bg-primary text-primary-foreground px-8 py-3 text-lg hover:opacity-90"
                 data-testid="button-get-started"
               >
@@ -155,7 +157,7 @@ export default function Landing() {
             </p>
             <Button 
               size="lg"
-              onClick={() => window.location.href = '/api/login'}
+              onClick={() => login()}
               className="bg-primary text-primary-foreground px-8 py-3 text-lg hover:opacity-90"
               data-testid="button-start-building"
             >

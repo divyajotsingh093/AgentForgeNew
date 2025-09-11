@@ -2,9 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated } from "./auth0";
 import { executionEngine } from "./executionEngine";
-import { insertProjectSchema, insertAgentSchema, insertToolSchema, insertFlowSchema, insertRunSchema } from "@shared/schema";
+import { insertProjectSchema, insertAgentSchema, insertToolSchema, insertFlowSchema, insertRunSchema, insertStepSchema, insertSecretSchema } from "@shared/schema";
 import { seedAllTemplates } from "./seedTemplates";
 
 export async function registerRoutes(app: Express, server?: Server): Promise<Server> {
@@ -14,7 +14,7 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       res.json(user);
     } catch (error) {
@@ -26,7 +26,7 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
   // Project routes
   app.get('/api/projects', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const projects = await storage.getProjects(userId);
       res.json(projects);
     } catch (error) {
@@ -37,7 +37,7 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
 
   app.post('/api/projects', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const projectData = insertProjectSchema.parse({ ...req.body, userId });
       const project = await storage.createProject(projectData);
       res.json(project);
@@ -245,7 +245,7 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
     try {
       const { templateId } = req.params;
       const { projectId, name, description, config } = req.body;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
 
       // Validate required parameters
       if (!projectId) {
@@ -324,9 +324,9 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
         let refId: string;
 
         if (templateStep.kind === 'agent') {
-          refId = agentMap.get(templateStep.name);
+          refId = agentMap.get(templateStep.name) || '';
         } else if (templateStep.kind === 'tool') {
-          refId = toolMap.get(templateStep.name);
+          refId = toolMap.get(templateStep.name) || '';
         } else {
           throw new Error(`Unknown step kind: ${templateStep.kind}`);
         }

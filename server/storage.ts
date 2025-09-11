@@ -78,15 +78,51 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
+    // If we have an ID, try to find and update by ID first
+    if (userData.id) {
+      const existingUser = await db.select().from(users).where(eq(users.id, userData.id)).limit(1);
+      
+      if (existingUser.length > 0) {
+        // Update existing user by ID
+        const [user] = await db
+          .update(users)
+          .set({
+            ...userData,
+            updatedAt: new Date(),
+          })
+          .where(eq(users.id, userData.id))
+          .returning();
+        return user;
+      }
+    }
+    
+    // Fallback: try to find by email for legacy users
+    if (userData.email) {
+      const existingUser = await db.select().from(users).where(eq(users.email, userData.email)).limit(1);
+      
+      if (existingUser.length > 0) {
+        // Update existing user found by email
+        const [user] = await db
+          .update(users)
+          .set({
+            ...userData,
+            updatedAt: new Date(),
+          })
+          .where(eq(users.id, existingUser[0].id))
+          .returning();
+        return user;
+      }
+    }
+    
+    // Create new user with the provided ID or generate one
     const [user] = await db
       .insert(users)
-      .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          ...userData,
-          updatedAt: new Date(),
-        },
+      .values({
+        id: userData.id || `auth0|${Date.now()}`, // Use provided ID or generate fallback
+        email: userData.email,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        profileImageUrl: userData.profileImageUrl,
       })
       .returning();
     return user;
