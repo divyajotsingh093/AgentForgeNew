@@ -1,0 +1,306 @@
+{
+  "name": "Invoice → Data Processor",
+  "description": "Extract structured data from invoices and export to accounting systems with proper validation and formatting",
+  "category": "finance",
+  "isPublic": true,
+  "templateData": {
+    "version": 1,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "invoice_file": {
+          "type": "string",
+          "description": "Path or URL to invoice file (PDF, image, etc.)"
+        },
+        "file_type": {
+          "type": "string",
+          "enum": ["pdf", "image", "email"],
+          "description": "Type of invoice source"
+        },
+        "export_target": {
+          "type": "string",
+          "enum": ["quickbooks", "xero", "csv", "none"],
+          "default": "none",
+          "description": "Where to export the processed data"
+        },
+        "company_name": {
+          "type": "string",
+          "description": "Expected company name for validation"
+        },
+        "currency": {
+          "type": "string",
+          "default": "USD",
+          "description": "Expected currency code"
+        }
+      },
+      "required": ["invoice_file", "file_type"]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "vendor_info": { 
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "address": { "type": "string" },
+            "contact": { "type": "string" }
+          }
+        },
+        "invoice_details": {
+          "type": "object", 
+          "properties": {
+            "invoice_number": { "type": "string" },
+            "date": { "type": "string" },
+            "due_date": { "type": "string" },
+            "currency": { "type": "string" }
+          }
+        },
+        "line_items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "description": { "type": "string" },
+              "quantity": { "type": "number" },
+              "unit_price": { "type": "number" },
+              "total": { "type": "number" }
+            }
+          }
+        },
+        "totals": {
+          "type": "object",
+          "properties": {
+            "subtotal": { "type": "number" },
+            "tax": { "type": "number" },
+            "total": { "type": "number" }
+          }
+        },
+        "validation_status": { "type": "string" },
+        "export_confirmation": { "type": "object" }
+      }
+    },
+    "agents": [
+      {
+        "name": "document_parser",
+        "description": "Extract raw text and structure from invoice documents",
+        "systemPrompt": "[#session:{{SESSION_ID}}] [#agent:document_parser]\nRole: Extract raw text and identify document structure from invoice files.\nFor PDF files, extract text directly. For images, use OCR. For emails, parse attachments.\nPreserve layout structure and identify key sections (header, line items, totals).\n\nOutput Discipline:\n- Use proper tagging: [#session:{{SESSION_ID}}] [#agent:document_parser] [#step:1]\n- If OCR is needed, emit a Tool Call for the OCR service\n- Extract all visible text while preserving spatial relationships\n- CRITICAL: You MUST end your response with a JSON block containing structured output matching your outputSchema\n- The final JSON block must contain: raw_text (string), document_structure (object), tool_call (object, optional)\n\nIMPORTANT: Always end with:\n```json\n{\n  \"raw_text\": \"...\",\n  \"document_structure\": {\"sections\": [...]},\n  \"tool_call\": {...} // optional\n}\n```",
+        "userTemplate": "Input context:\n- File: {{invoice_file}}\n- Type: {{file_type}} (one of: \"pdf\", \"image\", \"email\")\n\nProduce:\n1) [#step:1] Extract all text content from the document\n2) If OCR is required for images, emit a Tool Call before extraction\n3) Identify document sections: header, vendor info, line items, totals\n\nExpected Output Format:\n[#session:{{SESSION_ID}}] [#agent:document_parser] [#step:1]\n\n### Tool Call (only if OCR needed)\n```json\n{ \"tool\": \"ocr.extract_text\", \"args\": { \"file_path\": \"{{invoice_file}}\" }}\n```\n\n### Raw Text\n\n{{EXTRACTED_TEXT}}\n\n### Document Structure\n\n- Header: Lines 1-5\n- Vendor: Lines 6-10\n- Line Items: Lines 15-25\n- Totals: Lines 26-30",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "invoice_file": { "type": "string" },
+            "file_type": { "type": "string" }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "raw_text": { "type": "string" },
+            "document_structure": { "type": "object" },
+            "tool_call": { "type": "object" }
+          }
+        }
+      },
+      {
+        "name": "data_extractor",
+        "description": "Extract structured invoice data from raw text",
+        "systemPrompt": "[#session:{{SESSION_ID}}] [#agent:data_extractor]\nRole: Extract structured invoice data from raw text. Identify vendor info, invoice details, line items, and totals.\nUse pattern matching and context clues to parse standard invoice formats.\nHandle various layouts and formats gracefully.\n\nOutput Discipline:\n- Use proper tagging: [#session:{{SESSION_ID}}] [#agent:data_extractor] [#step:2]\n- Extract all key invoice fields systematically\n- Parse line items with quantities, prices, and totals\n- CRITICAL: You MUST end your response with a JSON block containing structured output matching your outputSchema\n- The final JSON block must contain all required invoice fields\n\nIMPORTANT: Always end with:\n```json\n{\n  \"vendor_info\": {\"name\": \"...\", \"address\": \"...\", \"contact\": \"...\"},\n  \"invoice_details\": {\"invoice_number\": \"...\", \"date\": \"...\", \"due_date\": \"...\", \"currency\": \"...\"},\n  \"line_items\": [{\"description\": \"...\", \"quantity\": 0, \"unit_price\": 0, \"total\": 0}],\n  \"totals\": {\"subtotal\": 0, \"tax\": 0, \"total\": 0}\n}\n```",
+        "userTemplate": "Inputs:\n- Raw Text: {{raw_text}}\n- Document Structure: {{document_structure}}\n- Expected Currency: {{currency}}\n\nProduce:\n1. [#step:2] Extract vendor information (name, address, contact)\n2. Extract invoice details (number, date, due date, currency)\n3. Parse line items with descriptions, quantities, unit prices, totals\n4. Calculate or extract subtotal, tax, and total amounts\n\nExpected Output Format:\n[#session:{{SESSION_ID}}] [#agent:data_extractor] [#step:2]\n\n### Vendor Information\n\n**Name:** {{VENDOR_NAME}}\n**Address:** {{VENDOR_ADDRESS}}\n**Contact:** {{VENDOR_CONTACT}}\n\n### Invoice Details\n\n**Invoice #:** {{INVOICE_NUMBER}}\n**Date:** {{INVOICE_DATE}}\n**Due Date:** {{DUE_DATE}}\n**Currency:** {{CURRENCY}}\n\n### Line Items\n\n| Description | Qty | Unit Price | Total |\n|-------------|-----|------------|-------|\n| {{ITEM1}} | {{QTY1}} | {{PRICE1}} | {{TOTAL1}} |\n\n### Totals\n\n**Subtotal:** {{SUBTOTAL}}\n**Tax:** {{TAX}}\n**Total:** {{TOTAL}}",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "raw_text": { "type": "string" },
+            "document_structure": { "type": "object" },
+            "currency": { "type": "string" }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "vendor_info": { "type": "object" },
+            "invoice_details": { "type": "object" },
+            "line_items": { "type": "array" },
+            "totals": { "type": "object" }
+          }
+        }
+      },
+      {
+        "name": "validator",
+        "description": "Validate extracted data and check for consistency",
+        "systemPrompt": "[#session:{{SESSION_ID}}] [#agent:validator]\nRole: Validate extracted invoice data for consistency, completeness, and accuracy.\nCheck mathematical calculations, required fields, format compliance.\nFlag any issues or discrepancies for review.\n\nOutput Discipline:\n- Use proper tagging: [#session:{{SESSION_ID}}] [#agent:validator] [#step:3]\n- Verify all calculations and totals\n- Check for missing or invalid fields\n- Provide validation status and recommendations\n- CRITICAL: You MUST end your response with a JSON block containing structured output matching your outputSchema\n- The final JSON block must contain: validation_status, issues, confidence_score\n\nIMPORTANT: Always end with:\n```json\n{\n  \"validation_status\": \"valid|warning|error\",\n  \"issues\": [\"...\"],\n  \"confidence_score\": 0.95,\n  \"recommendations\": [\"...\"]\n}\n```",
+        "userTemplate": "Inputs:\n- Vendor Info: {{vendor_info}}\n- Invoice Details: {{invoice_details}}\n- Line Items: {{line_items}}\n- Totals: {{totals}}\n- Expected Company: {{company_name}}\n\nValidate:\n1. [#step:3] Check mathematical accuracy of line item totals\n2. Verify subtotal + tax = total\n3. Validate required fields are present\n4. Check date formats and logical consistency\n5. Compare against expected company name if provided\n\nExpected Output Format:\n[#session:{{SESSION_ID}}] [#agent:validator] [#step:3]\n\n### Validation Results\n\n**Status:** {{STATUS}} (valid/warning/error)\n**Confidence:** {{CONFIDENCE}}%\n\n### Issues Found\n\n* {{ISSUE1}}\n* {{ISSUE2}}\n\n### Recommendations\n\n* {{RECOMMENDATION1}}\n* {{RECOMMENDATION2}}",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "vendor_info": { "type": "object" },
+            "invoice_details": { "type": "object" },
+            "line_items": { "type": "array" },
+            "totals": { "type": "object" },
+            "company_name": { "type": "string" }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "validation_status": { "type": "string" },
+            "issues": { "type": "array", "items": { "type": "string" } },
+            "confidence_score": { "type": "number" },
+            "recommendations": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      },
+      {
+        "name": "export_agent", 
+        "description": "Export processed invoice data to accounting systems",
+        "systemPrompt": "[#session:{{SESSION_ID}}] [#agent:export_agent]\nRole: Export validated invoice data to the specified accounting system or format.\nFormat data according to target system requirements.\nHandle API calls or file generation as needed.\n\nOutput Discipline:\n- Use proper tagging: [#session:{{SESSION_ID}}] [#agent:export_agent] [#step:4]\n- Format data for target system\n- If export target is set, emit Tool Call for the appropriate integration\n- Provide final summary and export confirmation\n- CRITICAL: You MUST end your response with a JSON block containing structured output matching your outputSchema\n- The final JSON block must contain: formatted_data, export_summary, tool_call (optional)\n\nIMPORTANT: Always end with:\n```json\n{\n  \"formatted_data\": {...},\n  \"export_summary\": \"...\",\n  \"tool_call\": {...} // optional\n}\n```",
+        "userTemplate": "Inputs:\n- Vendor Info: {{vendor_info}}\n- Invoice Details: {{invoice_details}} \n- Line Items: {{line_items}}\n- Totals: {{totals}}\n- Validation Status: {{validation_status}}\n- Export Target: {{export_target}}\n\nProduce:\n1. [#step:4] Format data for target system\n2. If export target is specified, emit Tool Call for integration\n3. Provide processing summary and next steps\n\nExpected Output Format:\n[#session:{{SESSION_ID}}] [#agent:export_agent] [#step:4]\n\n### Processed Invoice Data\n\n**Vendor:** {{VENDOR_NAME}}\n**Invoice #:** {{INVOICE_NUMBER}}\n**Total:** {{CURRENCY}} {{TOTAL}}\n**Status:** {{VALIDATION_STATUS}}\n\n### Export Summary\n\n{{EXPORT_DESCRIPTION}}\n\n### Tool Call (only if export requested)\n\n```json\n{\n  \"tool\": \"quickbooks.create_bill\",\n  \"args\": {\n    \"vendor\": {...},\n    \"invoice\": {...},\n    \"line_items\": [...]\n  }\n}\n```",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "vendor_info": { "type": "object" },
+            "invoice_details": { "type": "object" },
+            "line_items": { "type": "array" },
+            "totals": { "type": "object" },
+            "validation_status": { "type": "string" },
+            "export_target": { "type": "string" }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "formatted_data": { "type": "object" },
+            "export_summary": { "type": "string" },
+            "tool_call": { "type": "object" }
+          }
+        }
+      }
+    ],
+    "tools": [
+      {
+        "name": "ocr.extract_text",
+        "description": "Extract text from image files using OCR",
+        "type": "builtin",
+        "spec": {
+          "inputSchema": {
+            "type": "object", 
+            "properties": {
+              "file_path": {
+                "type": "string",
+                "description": "Path to image file for OCR processing"
+              },
+              "language": {
+                "type": "string",
+                "default": "en",
+                "description": "Language code for OCR"
+              }
+            },
+            "required": ["file_path"]
+          },
+          "outputSchema": {
+            "type": "object",
+            "properties": {
+              "text": { "type": "string" },
+              "confidence": { "type": "number" },
+              "language_detected": { "type": "string" }
+            }
+          }
+        }
+      },
+      {
+        "name": "quickbooks.create_bill",
+        "description": "Create a bill in QuickBooks from invoice data",
+        "type": "builtin",
+        "spec": {
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "vendor": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "address": { "type": "string" }
+                },
+                "required": ["name"]
+              },
+              "invoice": {
+                "type": "object", 
+                "properties": {
+                  "invoice_number": { "type": "string" },
+                  "date": { "type": "string", "format": "date" },
+                  "due_date": { "type": "string", "format": "date" },
+                  "currency": { "type": "string" }
+                },
+                "required": ["invoice_number", "date"]
+              },
+              "line_items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "description": { "type": "string" },
+                    "quantity": { "type": "number" },
+                    "unit_price": { "type": "number" },
+                    "account": { "type": "string" }
+                  },
+                  "required": ["description", "quantity", "unit_price"]
+                }
+              }
+            },
+            "required": ["vendor", "invoice", "line_items"]
+          },
+          "outputSchema": {
+            "type": "object",
+            "properties": {
+              "success": { "type": "boolean" },
+              "bill_id": { "type": "string" },
+              "bill_url": { "type": "string" },
+              "status": { "type": "string" }
+            }
+          }
+        }
+      }
+    ],
+    "steps": [
+      {
+        "idx": 1,
+        "kind": "agent",
+        "name": "document_parser",
+        "description": "Parse and extract text from invoice document",
+        "config": {
+          "inputs": ["invoice_file", "file_type"],
+          "outputs": ["raw_text", "document_structure"]
+        }
+      },
+      {
+        "idx": 2,
+        "kind": "agent",
+        "name": "data_extractor", 
+        "description": "Extract structured data from raw text",
+        "config": {
+          "inputs": ["raw_text", "document_structure", "currency"],
+          "outputs": ["vendor_info", "invoice_details", "line_items", "totals"]
+        }
+      },
+      {
+        "idx": 3,
+        "kind": "agent",
+        "name": "validator",
+        "description": "Validate extracted data for accuracy",
+        "config": {
+          "inputs": ["vendor_info", "invoice_details", "line_items", "totals", "company_name"],
+          "outputs": ["validation_status", "issues", "confidence_score"]
+        }
+      },
+      {
+        "idx": 4,
+        "kind": "agent",
+        "name": "export_agent",
+        "description": "Export processed data to accounting system",
+        "config": {
+          "inputs": ["vendor_info", "invoice_details", "line_items", "totals", "validation_status", "export_target"], 
+          "outputs": ["formatted_data", "export_summary"]
+        }
+      }
+    ]
+  }
+}

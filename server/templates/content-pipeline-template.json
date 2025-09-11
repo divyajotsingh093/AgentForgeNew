@@ -1,0 +1,402 @@
+{
+  "name": "Content → Distribution Pipeline",
+  "description": "Create, optimize, and distribute content across multiple channels with SEO optimization and performance tracking",
+  "category": "marketing",
+  "isPublic": true,
+  "templateData": {
+    "version": 1,
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "topic": {
+          "type": "string",
+          "description": "Main content topic or theme"
+        },
+        "content_type": {
+          "type": "string",
+          "enum": ["blog_post", "social_media", "email_campaign", "video_script"],
+          "description": "Type of content to create"
+        },
+        "target_audience": {
+          "type": "string",
+          "description": "Target audience description"
+        },
+        "tone": {
+          "type": "string",
+          "enum": ["professional", "casual", "friendly", "authoritative", "creative"],
+          "default": "professional",
+          "description": "Desired content tone"
+        },
+        "distribution_channels": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["website", "linkedin", "twitter", "medium", "email", "slack"]
+          },
+          "description": "Where to publish the content"
+        },
+        "keywords": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Target SEO keywords"
+        },
+        "word_count": {
+          "type": "integer",
+          "default": 800,
+          "description": "Target word count for content"
+        }
+      },
+      "required": ["topic", "content_type", "target_audience", "distribution_channels"]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "research_summary": { "type": "string" },
+        "content": { "type": "string" },
+        "seo_optimization": {
+          "type": "object",
+          "properties": {
+            "title": { "type": "string" },
+            "meta_description": { "type": "string" },
+            "keywords_used": { "type": "array", "items": { "type": "string" } },
+            "readability_score": { "type": "number" }
+          }
+        },
+        "distribution_results": { "type": "array" },
+        "performance_tracking": { "type": "object" }
+      }
+    },
+    "agents": [
+      {
+        "name": "research_agent",
+        "description": "Research topic and gather relevant information",
+        "systemPrompt": "[#session:{{SESSION_ID}}] [#agent:research_agent]\nRole: Research the given topic to gather relevant information, trends, and insights.\nUse available research tools to find current information, statistics, and expert opinions.\nProvide comprehensive research summary for content creation.\n\nOutput Discipline:\n- Use proper tagging: [#session:{{SESSION_ID}}] [#agent:research_agent] [#step:1]\n- If research tools are needed, emit Tool Calls for web search or database queries\n- Gather diverse perspectives and current information\n- CRITICAL: You MUST end your response with a JSON block containing structured output matching your outputSchema\n- The final JSON block must contain: research_summary, key_points, sources, tool_call (optional)\n\nIMPORTANT: Always end with:\n```json\n{\n  \"research_summary\": \"...\",\n  \"key_points\": [\"...\"],\n  \"sources\": [\"...\"],\n  \"tool_call\": {...} // optional\n}\n```",
+        "userTemplate": "Input context:\n- Topic: {{topic}}\n- Content Type: {{content_type}}\n- Target Audience: {{target_audience}}\n- Keywords: {{keywords}}\n\nResearch:\n1) [#step:1] Gather current information about the topic\n2) Identify key trends and insights\n3) Find relevant statistics and expert opinions\n4) Research competitor content and best practices\n\nExpected Output Format:\n[#session:{{SESSION_ID}}] [#agent:research_agent] [#step:1]\n\n### Tool Call (if needed)\n```json\n{ \"tool\": \"web_search.query\", \"args\": { \"query\": \"{{topic}} trends 2024\", \"limit\": 10 }}\n```\n\n### Research Summary\n\n{{RESEARCH_FINDINGS}}\n\n### Key Points\n\n* {{POINT1}}\n* {{POINT2}}\n* {{POINT3}}\n\n### Sources\n\n* {{SOURCE1}}\n* {{SOURCE2}}",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "topic": { "type": "string" },
+            "content_type": { "type": "string" },
+            "target_audience": { "type": "string" },
+            "keywords": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "research_summary": { "type": "string" },
+            "key_points": { "type": "array", "items": { "type": "string" } },
+            "sources": { "type": "array", "items": { "type": "string" } },
+            "tool_call": { "type": "object" }
+          }
+        }
+      },
+      {
+        "name": "writer_agent",
+        "description": "Create original content based on research",
+        "systemPrompt": "[#session:{{SESSION_ID}}] [#agent:writer_agent]\nRole: Create engaging, original content based on research findings.\nWrite in the specified tone for the target audience.\nStructure content appropriately for the content type.\nIncorporate SEO keywords naturally throughout the content.\n\nOutput Discipline:\n- Use proper tagging: [#session:{{SESSION_ID}}] [#agent:writer_agent] [#step:2]\n- Create engaging, well-structured content\n- Match the specified tone and word count\n- Include relevant keywords naturally\n- CRITICAL: You MUST end your response with a JSON block containing structured output matching your outputSchema\n- The final JSON block must contain: content, word_count, tone_assessment\n\nIMPORTANT: Always end with:\n```json\n{\n  \"content\": \"...\",\n  \"word_count\": 0,\n  \"tone_assessment\": \"professional\"\n}\n```",
+        "userTemplate": "Inputs:\n- Research Summary: {{research_summary}}\n- Key Points: {{key_points}}\n- Content Type: {{content_type}}\n- Target Audience: {{target_audience}}\n- Tone: {{tone}}\n- Keywords: {{keywords}}\n- Target Word Count: {{word_count}}\n\nCreate:\n1. [#step:2] Write original content based on research\n2. Structure appropriately for content type\n3. Use specified tone throughout\n4. Incorporate keywords naturally\n5. Meet target word count\n\nExpected Output Format:\n[#session:{{SESSION_ID}}] [#agent:writer_agent] [#step:2]\n\n### Content Draft\n\n{{CONTENT_HERE}}\n\n### Writing Summary\n\n**Word Count:** {{ACTUAL_COUNT}}\n**Tone:** {{TONE_USED}}\n**Keywords Included:** {{KEYWORDS_LIST}}",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "research_summary": { "type": "string" },
+            "key_points": { "type": "array", "items": { "type": "string" } },
+            "content_type": { "type": "string" },
+            "target_audience": { "type": "string" },
+            "tone": { "type": "string" },
+            "keywords": { "type": "array", "items": { "type": "string" } },
+            "word_count": { "type": "integer" }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "content": { "type": "string" },
+            "word_count": { "type": "integer" },
+            "tone_assessment": { "type": "string" }
+          }
+        }
+      },
+      {
+        "name": "editor_agent",
+        "description": "Review and improve content quality",
+        "systemPrompt": "[#session:{{SESSION_ID}}] [#agent:editor_agent]\nRole: Review content for clarity, grammar, flow, and engagement.\nImprove readability and ensure content meets quality standards.\nCheck for consistency in tone and messaging.\nSuggest improvements while preserving the author's voice.\n\nOutput Discipline:\n- Use proper tagging: [#session:{{SESSION_ID}}] [#agent:editor_agent] [#step:3]\n- Provide edited content with improvements\n- Maintain the original tone and message\n- Improve clarity and readability\n- CRITICAL: You MUST end your response with a JSON block containing structured output matching your outputSchema\n- The final JSON block must contain: edited_content, improvements_made, readability_score\n\nIMPORTANT: Always end with:\n```json\n{\n  \"edited_content\": \"...\",\n  \"improvements_made\": [\"...\"],\n  \"readability_score\": 8.5\n}\n```",
+        "userTemplate": "Inputs:\n- Original Content: {{content}}\n- Target Audience: {{target_audience}}\n- Content Type: {{content_type}}\n- Tone: {{tone}}\n\nEdit for:\n1. [#step:3] Grammar and spelling accuracy\n2. Clarity and flow improvements\n3. Engagement and readability\n4. Consistency in tone and style\n5. Content structure optimization\n\nExpected Output Format:\n[#session:{{SESSION_ID}}] [#agent:editor_agent] [#step:3]\n\n### Edited Content\n\n{{IMPROVED_CONTENT}}\n\n### Editorial Notes\n\n**Improvements Made:**\n* {{IMPROVEMENT1}}\n* {{IMPROVEMENT2}}\n\n**Readability Score:** {{SCORE}}/10\n**Overall Assessment:** {{ASSESSMENT}}",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "content": { "type": "string" },
+            "target_audience": { "type": "string" },
+            "content_type": { "type": "string" },
+            "tone": { "type": "string" }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "edited_content": { "type": "string" },
+            "improvements_made": { "type": "array", "items": { "type": "string" } },
+            "readability_score": { "type": "number" }
+          }
+        }
+      },
+      {
+        "name": "seo_optimizer",
+        "description": "Optimize content for search engines",
+        "systemPrompt": "[#session:{{SESSION_ID}}] [#agent:seo_optimizer]\nRole: Optimize content for search engines while maintaining readability.\nCreate compelling titles and meta descriptions.\nEnsure proper keyword density and placement.\nSuggest internal linking opportunities and content structure improvements.\n\nOutput Discipline:\n- Use proper tagging: [#session:{{SESSION_ID}}] [#agent:seo_optimizer] [#step:4]\n- Create SEO-optimized title and meta description\n- Analyze keyword usage and density\n- Provide SEO recommendations\n- CRITICAL: You MUST end your response with a JSON block containing structured output matching your outputSchema\n- The final JSON block must contain: seo_title, meta_description, keyword_analysis, recommendations\n\nIMPORTANT: Always end with:\n```json\n{\n  \"seo_title\": \"...\",\n  \"meta_description\": \"...\",\n  \"keyword_analysis\": {...},\n  \"recommendations\": [\"...\"]\n}\n```",
+        "userTemplate": "Inputs:\n- Edited Content: {{edited_content}}\n- Target Keywords: {{keywords}}\n- Content Type: {{content_type}}\n- Target Audience: {{target_audience}}\n\nOptimize:\n1. [#step:4] Create compelling SEO title (50-60 chars)\n2. Write meta description (150-160 chars)\n3. Analyze keyword usage and density\n4. Suggest content structure improvements\n5. Recommend internal linking opportunities\n\nExpected Output Format:\n[#session:{{SESSION_ID}}] [#agent:seo_optimizer] [#step:4]\n\n### SEO Optimization\n\n**Title:** {{SEO_TITLE}}\n**Meta Description:** {{META_DESCRIPTION}}\n\n### Keyword Analysis\n\n**Primary Keywords:** {{PRIMARY_KEYWORDS}}\n**Keyword Density:** {{DENSITY}}%\n**Keywords Used:** {{KEYWORDS_COUNT}}\n\n### SEO Recommendations\n\n* {{RECOMMENDATION1}}\n* {{RECOMMENDATION2}}\n* {{RECOMMENDATION3}}",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "edited_content": { "type": "string" },
+            "keywords": { "type": "array", "items": { "type": "string" } },
+            "content_type": { "type": "string" },
+            "target_audience": { "type": "string" }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "seo_title": { "type": "string" },
+            "meta_description": { "type": "string" },
+            "keyword_analysis": { "type": "object" },
+            "recommendations": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      },
+      {
+        "name": "publisher_agent",
+        "description": "Distribute content across specified channels",
+        "systemPrompt": "[#session:{{SESSION_ID}}] [#agent:publisher_agent]\nRole: Publish and distribute content across specified channels.\nFormat content appropriately for each platform.\nSchedule posts and track distribution results.\nProvide publishing summary and performance tracking setup.\n\nOutput Discipline:\n- Use proper tagging: [#session:{{SESSION_ID}}] [#agent:publisher_agent] [#step:5]\n- Format content for each distribution channel\n- If publishing tools are available, emit Tool Calls for each channel\n- Provide distribution summary and tracking setup\n- CRITICAL: You MUST end your response with a JSON block containing structured output matching your outputSchema\n- The final JSON block must contain: distribution_summary, published_urls, tracking_setup, tool_calls\n\nIMPORTANT: Always end with:\n```json\n{\n  \"distribution_summary\": \"...\",\n  \"published_urls\": [\"...\"],\n  \"tracking_setup\": {...},\n  \"tool_calls\": [{}]\n}\n```",
+        "userTemplate": "Inputs:\n- Final Content: {{edited_content}}\n- SEO Title: {{seo_title}}\n- Meta Description: {{meta_description}}\n- Distribution Channels: {{distribution_channels}}\n- Content Type: {{content_type}}\n\nPublish:\n1. [#step:5] Format content for each channel\n2. Create platform-specific posts\n3. Schedule or publish content\n4. Set up performance tracking\n5. Provide distribution summary\n\nExpected Output Format:\n[#session:{{SESSION_ID}}] [#agent:publisher_agent] [#step:5]\n\n### Distribution Summary\n\n**Channels:** {{CHANNELS_LIST}}\n**Content Format:** {{FORMAT}}\n**Published:** {{PUBLISHED_COUNT}}/{{TOTAL_CHANNELS}}\n\n### Tool Calls (if publishing enabled)\n\n```json\n[\n  { \"tool\": \"linkedin.create_post\", \"args\": { \"content\": \"...\", \"title\": \"...\" }},\n  { \"tool\": \"twitter.create_tweet\", \"args\": { \"text\": \"...\" }}\n]\n```\n\n### Performance Tracking\n\n**Tracking URLs:** {{TRACKING_URLS}}\n**Analytics Setup:** {{ANALYTICS_CONFIG}}\n**Review Date:** {{REVIEW_DATE}}",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "edited_content": { "type": "string" },
+            "seo_title": { "type": "string" },
+            "meta_description": { "type": "string" },
+            "distribution_channels": { "type": "array", "items": { "type": "string" } },
+            "content_type": { "type": "string" }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "distribution_summary": { "type": "string" },
+            "published_urls": { "type": "array", "items": { "type": "string" } },
+            "tracking_setup": { "type": "object" },
+            "tool_calls": { "type": "array" }
+          }
+        }
+      }
+    ],
+    "tools": [
+      {
+        "name": "web_search.query",
+        "description": "Search the web for current information and trends",
+        "type": "builtin",
+        "spec": {
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string",
+                "description": "Search query string"
+              },
+              "limit": {
+                "type": "integer",
+                "default": 10,
+                "description": "Number of results to return"
+              },
+              "date_range": {
+                "type": "string",
+                "enum": ["day", "week", "month", "year", "all"],
+                "default": "month",
+                "description": "Time range for search results"
+              }
+            },
+            "required": ["query"]
+          },
+          "outputSchema": {
+            "type": "object",
+            "properties": {
+              "results": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "title": { "type": "string" },
+                    "url": { "type": "string" },
+                    "snippet": { "type": "string" },
+                    "date": { "type": "string" }
+                  }
+                }
+              },
+              "total_results": { "type": "integer" }
+            }
+          }
+        }
+      },
+      {
+        "name": "linkedin.create_post",
+        "description": "Create a post on LinkedIn",
+        "type": "builtin",
+        "spec": {
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "content": {
+                "type": "string",
+                "description": "Post content text"
+              },
+              "title": {
+                "type": "string",
+                "description": "Post title or headline"
+              },
+              "visibility": {
+                "type": "string",
+                "enum": ["public", "connections"],
+                "default": "public",
+                "description": "Post visibility setting"
+              }
+            },
+            "required": ["content"]
+          },
+          "outputSchema": {
+            "type": "object",
+            "properties": {
+              "success": { "type": "boolean" },
+              "post_id": { "type": "string" },
+              "post_url": { "type": "string" },
+              "status": { "type": "string" }
+            }
+          }
+        }
+      },
+      {
+        "name": "twitter.create_tweet",
+        "description": "Create a tweet on Twitter",
+        "type": "builtin",
+        "spec": {
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string",
+                "description": "Tweet text content (max 280 chars)"
+              },
+              "thread": {
+                "type": "boolean",
+                "default": false,
+                "description": "Create as thread if content is long"
+              }
+            },
+            "required": ["text"]
+          },
+          "outputSchema": {
+            "type": "object",
+            "properties": {
+              "success": { "type": "boolean" },
+              "tweet_id": { "type": "string" },
+              "tweet_url": { "type": "string" },
+              "thread_ids": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      },
+      {
+        "name": "medium.publish_article",
+        "description": "Publish an article to Medium",
+        "type": "builtin",
+        "spec": {
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "description": "Article title"
+              },
+              "content": {
+                "type": "string",
+                "description": "Article content in Markdown"
+              },
+              "tags": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Article tags"
+              },
+              "publish_status": {
+                "type": "string",
+                "enum": ["draft", "public"],
+                "default": "public",
+                "description": "Publication status"
+              }
+            },
+            "required": ["title", "content"]
+          },
+          "outputSchema": {
+            "type": "object",
+            "properties": {
+              "success": { "type": "boolean" },
+              "article_id": { "type": "string" },
+              "article_url": { "type": "string" },
+              "status": { "type": "string" }
+            }
+          }
+        }
+      }
+    ],
+    "steps": [
+      {
+        "idx": 1,
+        "kind": "agent",
+        "name": "research_agent",
+        "description": "Research topic and gather information",
+        "config": {
+          "inputs": ["topic", "content_type", "target_audience", "keywords"],
+          "outputs": ["research_summary", "key_points", "sources"]
+        }
+      },
+      {
+        "idx": 2,
+        "kind": "agent",
+        "name": "writer_agent",
+        "description": "Create original content based on research",
+        "config": {
+          "inputs": ["research_summary", "key_points", "content_type", "target_audience", "tone", "keywords", "word_count"],
+          "outputs": ["content", "word_count", "tone_assessment"]
+        }
+      },
+      {
+        "idx": 3,
+        "kind": "agent",
+        "name": "editor_agent",
+        "description": "Review and improve content quality",
+        "config": {
+          "inputs": ["content", "target_audience", "content_type", "tone"],
+          "outputs": ["edited_content", "improvements_made", "readability_score"]
+        }
+      },
+      {
+        "idx": 4,
+        "kind": "agent",
+        "name": "seo_optimizer",
+        "description": "Optimize content for search engines",
+        "config": {
+          "inputs": ["edited_content", "keywords", "content_type", "target_audience"],
+          "outputs": ["seo_title", "meta_description", "keyword_analysis", "recommendations"]
+        }
+      },
+      {
+        "idx": 5,
+        "kind": "agent",
+        "name": "publisher_agent",
+        "description": "Distribute content across channels",
+        "config": {
+          "inputs": ["edited_content", "seo_title", "meta_description", "distribution_channels", "content_type"],
+          "outputs": ["distribution_summary", "published_urls", "tracking_setup"]
+        }
+      }
+    ]
+  }
+}
