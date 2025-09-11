@@ -1,0 +1,340 @@
+# Agent Builder — Spec & MVP (Lovable)
+
+Purpose: ship a **no‑code/low‑code Agent Builder** that lets users assemble multi‑agent workflows with tools and optional MCP, then publish them as reusable templates and/or an MCP server.
+
+---
+
+## 1) Product Goals
+
+* **Fast assembly**: Create a working agent in ≤10 minutes.
+* **Composable**: Plug tools (Notion/Jira/Slack/Zoom), data sources, and MCP tools.
+* **Traceable**: Every step tagged; reproducible runs; exportable logs.
+* **Portable**: Export/import as JSON; publish as **MCP server**.
+
+Non‑goals (for MVP): marketplace, multi‑tenant RBAC granularity, complex branching. Keep **sequential or simple fan‑out** only.
+
+---
+
+## 2) Personas & Top User Stories
+
+* **Maker / Founder**: “I want to stitch 3–5 steps (LLM + tools) to solve a task and ship a demo.”
+
+  * US1: Create new agent from template; edit prompts; connect a tool; run test.
+  * US2: Observe run timeline with agent tags and tool calls.
+* **Ops / PM**: “I want repeatable runs and exports.”
+
+  * US3: Save a template, set env vars/secrets, schedule runs.
+* **Engineer**: “I want to add custom tools and expose MCP.”
+
+  * US4: Register a custom action, generate SDK handler stub, publish MCP.
+
+---
+
+## 3) Core Concepts & Definitions
+
+* **Agent**: Unit with a **system prompt**, optional **few‑shots**, **inputs schema**, **outputs schema**.
+* **Flow**: Ordered list of **steps**. Each step invokes an **Agent** or a **Tool**. (MVP: linear + optional conditional skip).
+* **Tool**: External action with a JSON schema (args) and handler (Lovable Action or MCP tool).
+* **Connector (MCP)**: External tool/resource reachable via MCP; addressed as `mcp:<toolName>`.
+* **Run**: Execution instance with inputs, outputs, logs, artifacts.
+* **Template**: Saved agent/flow preset with parameterizable fields.
+
+---
+
+## 4) MVP Feature List
+
+1. **Visual Builder (Linear)**: Step list with drag‑reorder; each step is Agent or Tool.
+2. **Prompt Editor**: System + user templates; variable insertion; preview.
+3. **Tool Registry**: Add built‑in tools (Notion/Jira/Slack/Zoom) + custom HTTP tool; mark MCP tools by prefix.
+4. **Run Console**: Live logs with tags `[session][agent][step][tool][mcp]`; diff view for prompt changes.
+5. **Env & Secrets**: Project‑level secrets; step‑level overrides.
+6. **Template Library**: Save, duplicate, export/import JSON.
+7. **MCP Publish (Basic)**: Generate `mcp.json` from selected tools/resources; serve.
+
+Nice‑to‑have (post‑MVP): branching, loops, human‑in‑the‑loop checkpoints, scheduling UI, marketplace.
+
+---
+
+## 5) Data Model (DBML)
+
+```dbml
+Table projects {
+  id uuid [pk]
+  name text
+  slug text [unique]
+  created_at timestamp
+}
+
+Table agents {
+  id uuid [pk]
+  project_id uuid [ref: > projects.id]
+  name text
+  description text
+  system_prompt text
+  user_template text
+  few_shots text
+  input_schema jsonb
+  output_schema jsonb
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table tools {
+  id uuid [pk]
+  project_id uuid [ref: > projects.id]
+  name text
+  type text // builtin|http|mcp
+  spec jsonb // input schema, endpoint, method, etc.
+  created_at timestamp
+}
+
+Table flows {
+  id uuid [pk]
+  project_id uuid [ref: > projects.id]
+  name text
+  description text
+  version int
+  created_at timestamp
+}
+
+Table steps {
+  id uuid [pk]
+  flow_id uuid [ref: > flows.id]
+  idx int // order
+  kind text // agent|tool
+  ref_id uuid // agents.id or tools.id
+  config jsonb // per‑step overrides
+}
+
+Table runs {
+  id uuid [pk]
+  flow_id uuid [ref: > flows.id]
+  session_id text
+  status text // queued|running|success|error
+  input jsonb
+  output jsonb
+  created_at timestamp
+}
+
+Table logs {
+  id uuid [pk]
+  run_id uuid [ref: > runs.id]
+  ts timestamp
+  level text
+  tags jsonb // {session, agent, step, tool, mcp}
+  message text
+  payload jsonb
+}
+
+Table secrets {
+  id uuid [pk]
+  project_id uuid [ref: > projects.id]
+  key text
+  value_enc text // encrypted
+  created_at timestamp
+}
+```
+
+---
+
+## 6) Execution Engine (MVP)
+
+* **State Machine** per run: `init → step[n] → ... → complete|error`.
+* **Context Bus**: A shared `context` map passed between steps; agents read/write using keys defined by schema.
+* **Tool Dispatcher**: If `tool` starts with `mcp:` route to MCP client; else invoke Lovable Action.
+* **Retry**: Each step may define `max_retries` (default 0). On tool failure, attempt one simplified retry.
+
+---
+
+## 7) API Surface (internal)
+
+```http
+POST /api/projects/:id/flows        // create flow
+GET  /api/flows/:id                 // read flow
+POST /api/flows/:id/run             // start run
+GET  /api/runs/:id                  // read run status
+GET  /api/runs/:id/logs             // stream logs (SSE)
+POST /api/tools/test                // dry‑run a tool with args
+POST /api/mcp/publish               // serve mcp.json
+```
+
+---
+
+## 8) SDK Interfaces (TypeScript)
+
+```ts
+export type StepKind = 'agent' | 'tool';
+export interface AgentDef {
+  id: string; name: string; system: string; user: string;
+  inputSchema?: any; outputSchema?: any; fewShots?: string;
+}
+export interface ToolDef { id: string; name: string; type: 'builtin'|'http'|'mcp'; spec: any }
+export interface StepDef { id: string; kind: StepKind; refId: string; idx: number; config?: any }
+export interface FlowDef { id: string; name: string; steps: StepDef[] }
+export interface RunRequest { flowId: string; input: Record<string,any> }
+export interface RunEvent { ts:string; level:'info'|'warn'|'error'; tags: Record<string,string>; message:string; payload?:any }
+```
+
+---
+
+## 9) UI Blueprint
+
+**A. Flow Builder (Linear)**
+
+* Left panel: Agent Library, Tools Registry, Templates
+* Canvas: Ordered step list (1…N) with drag handle, enable/disable, per‑step config
+* Right panel: Inspector (prompt editor, variables, schema, few‑shots)
+
+**B. Prompt Editor**
+
+* Split view: System (top), User Template (bottom)
+* Variables list with one‑click insert (`{{var}}`)
+* Test input panel + Preview output
+
+**C. Run Console**
+
+* Timeline with badges: `[agent:summariser] [step:2]` etc.
+* Tabs: Output | Logs | Tool Calls | Raw JSON
+* “Rerun step from here” button
+
+**D. Tools Registry**
+
+* Built‑ins: `notion.create_tasks`, `jira.create_issues`, `slack.post_message`, `zoom.fetch_transcript`
+* HTTP tool wizard: name, URL, method, headers (secrets), input schema
+* MCP tools: register endpoint and list; prefix auto‑added
+
+**E. MCP Publisher**
+
+* Select which tools/resources to expose
+* Generates `mcp.json` preview
+* Toggle **Serve MCP** (dev server)
+
+---
+
+## 10) Prompt Conventions (reuse your tagging)
+
+```
+[#session:{{SESSION_ID}}] [#agent:{{AGENT_NAME}}] [#step:{{N}}] [#tool:{{TOOL}}] [#mcp:{{MCP_TOOL}}]
+Output in markdown; tables for lists. Only emit JSON inside a fenced `Tool Call` block.
+```
+
+### Agent Skeleton
+
+```
+System:
+You are {{AGENT_NAME}}. Role: {{ROLE}}. Keep to the output discipline and tagging.
+If a tool is required, emit exactly one Tool Call with minimal args.
+
+User Template:
+Inputs: {{INPUT_VARS}}
+Produce: {{EXPECTED_SECTIONS}}
+```
+
+---
+
+## 11) Built‑in Templates (ship with 3)
+
+1. **Meeting → Action Orchestrator** (4 agents + publisher) — default.
+2. **Invoice Reconciler** (OCR → categoriser → validator → exporter).
+3. **Content Pipeline** (style → SEO → editor → scheduler).
+
+Each template packaged as JSON (see §14).
+
+---
+
+## 12) Security & Compliance (MVP)
+
+* Encrypt secrets at rest; scoped to project.
+* Redact secrets from logs.
+* PII awareness toggle: mask emails/phones in Publisher outputs by default.
+
+---
+
+## 13) Observability
+
+* **Run IDs** + **Session tags** in every log line.
+* Store tokens usage per step (model cost telemetry).
+* Error drilldown links to the exact step/prompt version.
+
+---
+
+## 14) Import/Export Format (Flow JSON)
+
+```json
+{
+  "version": 1,
+  "name": "Meeting → Action",
+  "inputs": {"transcript":"string","attendees":"string[]","export":"string"},
+  "steps": [
+    {"kind":"agent","name":"transcriber","system":"...","user":"...","out":"transcript"},
+    {"kind":"agent","name":"summariser","system":"...","user":"...","in":{"transcript":"transcript"},"out":"summary"},
+    {"kind":"agent","name":"action_extractor","system":"...","user":"...","in":{"transcript":"transcript","summary":"summary"},"out":"actions"},
+    {"kind":"tool","name":"notion.create_tasks","args":{"tasks":"actions"}},
+    {"kind":"agent","name":"publisher","system":"...","user":"...","in":{"summary":"summary","actions":"actions"}}
+  ]
+}
+```
+
+---
+
+## 15) Example: Building Meeting → Action in Agent Builder
+
+* Create agents with prompts from your existing canvas doc.
+* Add tools: Notion, Slack (optional).
+* Build flow with 5 steps (transcriber → summariser → action\_extractor → tool export → publisher).
+* Test with sample transcript; watch logs for tool calls.
+
+---
+
+## 16) Shipping Plan (Two Weeks)
+
+**Week 1**
+
+* D1–D2: DB + API skeleton; Steps/Flows; Secrets vault.
+* D3: Prompt Editor; Agent CRUD.
+* D4: Tools Registry (builtin + HTTP); Tool Dispatcher.
+* D5: Run Console (timeline, logs, output).
+
+**Week 2**
+
+* D6: Template library (3 seeds); Import/Export JSON.
+* D7: MCP Publisher (serve `mcp.json`).
+* D8: Polishing; smoke tests; sample dataset.
+* D9–D10: Docs + demo video; beta users.
+
+**Exit Criteria**
+
+* Create, run, and export from at least 2 templates.
+* MCP server exposes 1 tool successfully (e.g., `export_notion`).
+* Full run observed with tags and tool logs.
+
+---
+
+## 17) Acceptance Tests
+
+* Create a new flow from template and run to completion with Notion export.
+* Add a new HTTP tool (webhook.site), call it with step output, see success.
+* Register an MCP endpoint and call `mcp:calendar.query` from a step.
+* Export flow JSON; import into a fresh project; run succeeds.
+
+---
+
+## 18) Backlog (Post‑MVP)
+
+* Branching/conditions; loop and map‑over collections.
+* Human‑in‑the‑loop checkpoints with approvals.
+* Scheduling + cron; webhooks on completion.
+* Versioned prompts; A/B compare.
+* Marketplace for templates/tools.
+* Fine‑grained roles & audit trails.
+
+---
+
+## 19) Quick Start Checklist (for you now)
+
+* [ ] Create DB tables from §5
+* [ ] Implement APIs from §7
+* [ ] Build UI panels from §9
+* [ ] Seed templates from §11
+* [ ] Wire tool dispatcher + MCP from §6
+* [ ] Record a 90‑sec demo

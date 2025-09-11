@@ -1,0 +1,70 @@
+You are a Staff Product Architect tasked with designing an Agent Builder platform (Lovable v1.0+).
+
+Context
+We already have an MVP spec:
+- Core entities: Agent (system prompt + template), Tool (builtin/HTTP/MCP), Flow (linear ordered steps), Run (execution with logs).
+- Features: Visual flow builder, prompt editor, tool registry, run console, secrets, template library, MCP publisher.
+- Execution: sequential flow, tool dispatcher, context bus, retry on failure.
+
+Goal
+Expand this MVP into a roadmap and design that incorporates best practices from leading platforms (Relevance AI, GenSpark, LangGraph, MCP standard).
+
+Deliverables (markdown sections):
+
+1) **Feature Roadmap Table**
+   Columns: Feature | Description | Why Now | Effort (S/M/L) | Impact (H/M/L) | Dependencies | KPI.
+   Must include:
+   - Text-to-Agent (natural language → agent skeletons/flows).
+   - Multi-agent teamwork / AI Workforce (orchestration + escalation).
+   - Super-Agent Delegation (coordinator → specialists).
+   - SOP-driven workflows & retries (LangGraph style).
+   - Parallelism (fan-out/fan-in execution).
+   - Memory/Knowledge context persistence.
+   - Multimodal actions (slides, sheets, docs, calls).
+   - API-first integrations & marketplace.
+   - MCP client + MCP server publishing.
+   - Visual Builder ergonomics & run console.
+
+2) **System Design Snapshot**
+   - Execution model: stateful graph, context passing, retries, evaluation hooks.
+   - Run logging: `[session][agent][step][tool][mcp]`.
+   - Storage: agents, flows, runs, logs, secrets, memory store, prompt versions.
+   - Observability: cost/tokens, eval hooks, golden tests.
+
+3) **Tool & MCP Strategy**
+   - Unified tool schema (JSON-Schema args, idempotency, auth).
+   - List 5 seed tools (notion.create_tasks, jira.create_issues, slack.post_message, drive.fetch_file, slides.create_deck).
+   - MCP plan: which internal tools/resources to expose, sample mcp.json, security (scopes, consent), routing rules.
+
+4) **Text-to-Agent Spec**
+   - Input: free-text brief.
+   - Output: Flow JSON (agents, tools, steps, schemas).
+   - Guardrails: block destructive actions unless explicit owner consent.
+
+5) **Multimodal Actions**
+   - Contracts for slide generator, sheet writer, doc composer.
+   - Export endpoints (PDF, PPTX, GSheet).
+
+6) **Parallelism & SOPs**
+   - Where to parallelize (research, variants, data fetch).
+   - SOP authoring: retries, budgets, eval rules, human escalation.
+
+7) **Observability & Evaluation**
+   - Logs, structured outputs, run replay.
+   - Synthetic eval harness; accuracy, reliability metrics.
+
+8) **Security & Compliance**
+   - Secrets vault, PII masking, audit logs.
+   - Human consent before sensitive MCP tool calls.
+
+9) **14-Day Delivery Plan**
+   - Week 1: Core flow builder, text-to-agent thin slice, run console, Notion export.
+   - Week 2: MCP client+server P0, parallel execution, multimodal slide export, eval hooks, demo.
+
+Constraints
+- UI starts linear; add branching later.
+- Ship one export integration first (Notion); others optional.
+- Favor shipping quickly over completeness.
+
+Format
+Write the output as a structured spec in markdown, with clear sections, tables, and JSON examples where needed.
