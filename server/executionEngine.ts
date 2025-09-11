@@ -2,6 +2,7 @@ import { storage } from "./storage";
 import { generateAgentResponse } from "./openaiClient";
 import { createNotionTasks } from "./notionClient";
 import type { Run, Step, Agent, Tool } from "@shared/schema";
+import { z } from "zod";
 
 class ExecutionEngine {
   private activeRuns = new Map<string, any>();
@@ -34,7 +35,7 @@ class ExecutionEngine {
 
         try {
           if (step.kind === 'agent') {
-            context = await this.executeAgentStep(runId, run.sessionId, step, context);
+            context = await this.executeAgentStepWithRetry(runId, run.sessionId, step, context);
           } else if (step.kind === 'tool') {
             context = await this.executeToolStep(runId, run.sessionId, step, context);
           }
@@ -77,6 +78,69 @@ class ExecutionEngine {
     }
   }
 
+  private async executeAgentStepWithRetry(runId: string, sessionId: string, step: Step, context: any): Promise<any> {
+    const maxRetries = 2;
+    let lastError: Error | null = null;
+    
+    for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+      try {
+        const result = await this.executeAgentStep(runId, sessionId, step, context);
+        
+        // Check if we got structured output - if not on first attempt, retry
+        const agent = await storage.getAgent(step.refId);
+        if (agent?.outputSchema && attempt === 1) {
+          const hasStructuredFields = Object.keys(agent.outputSchema.properties || {}).some(
+            field => result.hasOwnProperty(field)
+          );
+          
+          if (!hasStructuredFields) {
+            await this.logMessage(runId, 'warn', {
+              session: sessionId,
+              agent: agent.name,
+              attempt: attempt.toString()
+            }, `No structured output detected on attempt ${attempt}, retrying with enhanced prompt`);
+            
+            // Add retry instruction to context for next attempt
+            context._retry_instruction = "CRITICAL: Your previous response did not end with a properly formatted JSON block. You MUST end your response with a JSON code block that matches your outputSchema exactly.";
+            continue;
+          }
+        }
+        
+        // Remove retry instruction on success
+        delete context._retry_instruction;
+        return result;
+        
+      } catch (error) {
+        lastError = error as Error;
+        
+        await this.logMessage(runId, 'warn', {
+          session: sessionId,
+          step: step.idx.toString(),
+          attempt: attempt.toString()
+        }, `Agent step attempt ${attempt} failed: ${lastError.message}`);
+        
+        if (attempt > maxRetries) {
+          break;
+        }
+        
+        // Add retry context for next attempt
+        context._retry_instruction = `CRITICAL: Previous attempt failed with error: ${lastError.message}. Ensure your response ends with a properly formatted JSON block that matches your outputSchema.`;
+      }
+    }
+    
+    // If all attempts failed, log final error and continue with basic context
+    await this.logMessage(runId, 'error', {
+      session: sessionId,
+      step: step.idx.toString()
+    }, `All retry attempts failed. Final error: ${lastError?.message}. Continuing with text-only output.`);
+    
+    // Remove retry instruction
+    delete context._retry_instruction;
+    
+    // Return the result from the last attempt even if parsing failed
+    return await this.executeAgentStep(runId, sessionId, step, context);
+  }
+
   private async executeAgentStep(runId: string, sessionId: string, step: Step, context: any): Promise<any> {
     const agent = await storage.getAgent(step.refId);
     if (!agent) {
@@ -95,29 +159,18 @@ class ExecutionEngine {
       userMessage = userMessage.replace(new RegExp(`{{${key}}}`, 'g'), context[key] || '');
     });
 
-    const response = await generateAgentResponse(agent.systemPrompt, userMessage, context);
-    
-    // Parse any tool calls from the response
-    const toolCallMatch = response.match(/```json\s*(\{[\s\S]*?\})\s*```/);
-    if (toolCallMatch) {
-      await this.logMessage(runId, 'info', { 
-        session: sessionId, 
-        agent: agent.name,
-        tool: 'tool_call'
-      }, `Agent requested tool call`);
-      
-      try {
-        const toolCall = JSON.parse(toolCallMatch[1]);
-        context[`${agent.name}_tool_call`] = toolCall;
-      } catch (error) {
-        await this.logMessage(runId, 'warn', { 
-          session: sessionId, 
-          agent: agent.name
-        }, `Failed to parse tool call: ${(error as Error).message}`);
-      }
+    // Add retry instruction if present
+    if (context._retry_instruction) {
+      userMessage = `${context._retry_instruction}\n\n${userMessage}`;
     }
 
+    const response = await generateAgentResponse(agent.systemPrompt, userMessage, context);
+    
+    // Store the full response for debugging
     context[`${agent.name}_output`] = response;
+    
+    // Parse structured JSON output from agent response
+    await this.parseAgentStructuredOutput(runId, sessionId, agent, response, context);
     
     await this.logMessage(runId, 'info', { 
       session: sessionId, 
@@ -126,6 +179,157 @@ class ExecutionEngine {
     }, `Agent completed: ${agent.name}`);
 
     return context;
+  }
+
+  private async parseAgentStructuredOutput(
+    runId: string,
+    sessionId: string,
+    agent: Agent,
+    response: string,
+    context: any
+  ): Promise<void> {
+    try {
+      // Extract the final JSON block from the response (agents should end with structured output)
+      const jsonMatches = response.match(/```json\s*(\{[\s\S]*?\})\s*```/g);
+      
+      if (!jsonMatches || jsonMatches.length === 0) {
+        await this.logMessage(runId, 'warn', {
+          session: sessionId,
+          agent: agent.name
+        }, `No JSON output found from agent ${agent.name}, using text-only output`);
+        return;
+      }
+
+      // Get the last JSON block (structured output should be at the end)
+      const lastJsonMatch = jsonMatches[jsonMatches.length - 1];
+      const jsonContent = lastJsonMatch.match(/```json\s*(\{[\s\S]*?\})\s*```/)?.[1];
+      
+      if (!jsonContent) {
+        throw new Error("Could not extract JSON content from final block");
+      }
+
+      // Parse the JSON
+      let parsedOutput;
+      try {
+        parsedOutput = JSON.parse(jsonContent);
+      } catch (parseError) {
+        throw new Error(`JSON parsing failed: ${(parseError as Error).message}`);
+      }
+
+      // Validate against agent's outputSchema if available
+      if (agent.outputSchema) {
+        try {
+          const zodSchema = this.jsonSchemaToZod(agent.outputSchema);
+          const validatedOutput = zodSchema.parse(parsedOutput);
+          parsedOutput = validatedOutput;
+          
+          await this.logMessage(runId, 'info', {
+            session: sessionId,
+            agent: agent.name
+          }, `Successfully validated structured output against schema`);
+        } catch (validationError) {
+          await this.logMessage(runId, 'warn', {
+            session: sessionId,
+            agent: agent.name
+          }, `Schema validation failed: ${(validationError as Error).message}, using unvalidated output`);
+        }
+      }
+
+      // Store structured fields in context for downstream templating
+      if (typeof parsedOutput === 'object' && parsedOutput !== null) {
+        Object.keys(parsedOutput).forEach(key => {
+          context[key] = parsedOutput[key];
+          
+          await this.logMessage(runId, 'debug', {
+            session: sessionId,
+            agent: agent.name,
+            field: key
+          }, `Added structured field to context: ${key}`);
+        });
+
+        await this.logMessage(runId, 'info', {
+          session: sessionId,
+          agent: agent.name
+        }, `Added ${Object.keys(parsedOutput).length} structured fields to context`);
+      }
+
+      // Also check for tool calls in the structured output
+      if (parsedOutput.tool_call && typeof parsedOutput.tool_call === 'object') {
+        context[`${agent.name}_tool_call`] = parsedOutput.tool_call;
+        
+        await this.logMessage(runId, 'info', {
+          session: sessionId,
+          agent: agent.name,
+          tool: 'tool_call'
+        }, `Agent requested tool call via structured output`);
+      }
+
+    } catch (error) {
+      await this.logMessage(runId, 'error', {
+        session: sessionId,
+        agent: agent.name
+      }, `Failed to parse structured output: ${(error as Error).message}`);
+      
+      // Don't throw - continue with text-only output
+    }
+  }
+
+  private jsonSchemaToZod(schema: any): z.ZodSchema {
+    // Convert JSON Schema to Zod schema for validation
+    if (!schema || typeof schema !== 'object') {
+      return z.any();
+    }
+
+    if (schema.type === 'object' && schema.properties) {
+      const shape: Record<string, z.ZodSchema> = {};
+      
+      Object.entries(schema.properties).forEach(([key, propSchema]: [string, any]) => {
+        shape[key] = this.jsonSchemaToZod(propSchema);
+      });
+      
+      const zodObject = z.object(shape);
+      
+      // Handle optional vs required fields
+      if (schema.required && Array.isArray(schema.required)) {
+        const requiredFields = new Set(schema.required);
+        const partialShape: Record<string, z.ZodSchema> = {};
+        
+        Object.entries(shape).forEach(([key, zodSchema]) => {
+          partialShape[key] = requiredFields.has(key) ? zodSchema : zodSchema.optional();
+        });
+        
+        return z.object(partialShape);
+      }
+      
+      return zodObject.partial(); // All fields optional by default
+    }
+
+    if (schema.type === 'array' && schema.items) {
+      return z.array(this.jsonSchemaToZod(schema.items));
+    }
+
+    if (schema.type === 'string') {
+      let zodSchema = z.string();
+      if (schema.enum) {
+        return z.enum(schema.enum);
+      }
+      return zodSchema;
+    }
+
+    if (schema.type === 'number') {
+      return z.number();
+    }
+
+    if (schema.type === 'integer') {
+      return z.number().int();
+    }
+
+    if (schema.type === 'boolean') {
+      return z.boolean();
+    }
+
+    // Default fallback
+    return z.any();
   }
 
   private async executeToolStep(runId: string, sessionId: string, step: Step, context: any, simplified = false): Promise<any> {
