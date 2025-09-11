@@ -6,6 +6,21 @@ import { z } from "zod";
 
 class ExecutionEngine {
   private activeRuns = new Map<string, any>();
+  private wss: any = null;
+
+  setWebSocketServer(wss: any) {
+    this.wss = wss;
+  }
+
+  private broadcastToRun(runId: string, message: any) {
+    if (this.wss) {
+      this.wss.clients.forEach((client: any) => {
+        if (client.readyState === 1 && client.runId === runId) { // WebSocket.OPEN === 1
+          client.send(JSON.stringify(message));
+        }
+      });
+    }
+  }
 
   async executeFlow(runId: string) {
     try {
@@ -535,6 +550,16 @@ class ExecutionEngine {
     }
     
     await storage.updateRun(runId, updates);
+    
+    // Broadcast status update to WebSocket clients
+    this.broadcastToRun(runId, {
+      type: 'status_update',
+      data: {
+        status,
+        output: updates.output,
+        completedAt: updates.completedAt
+      }
+    });
   }
 
   private generateOutputSummary(context: any): any {
@@ -684,7 +709,7 @@ class ExecutionEngine {
 
   private async logMessage(runId: string, level: string, tags: Record<string, string>, message: string, payload?: any) {
     try {
-      await storage.createLog({
+      const logEntry = await storage.createLog({
         runId,
         level,
         tags,
@@ -692,8 +717,20 @@ class ExecutionEngine {
         payload
       });
 
-      // Broadcast to WebSocket clients if available
-      // This would be implemented with the WebSocket server
+      // Broadcast to WebSocket clients
+      this.broadcastToRun(runId, {
+        type: 'log',
+        data: {
+          id: logEntry.id,
+          timestamp: logEntry.ts,
+          level: logEntry.level,
+          tags: logEntry.tags,
+          message: logEntry.message,
+          payload: logEntry.payload
+        }
+      });
+
+      console.log(`[${level.toUpperCase()}] ${message}`, tags);
     } catch (error) {
       console.error("Failed to create log:", error);
     }

@@ -7,7 +7,7 @@ import { executionEngine } from "./executionEngine";
 import { insertProjectSchema, insertAgentSchema, insertToolSchema, insertFlowSchema, insertRunSchema } from "@shared/schema";
 import { seedAllTemplates } from "./seedTemplates";
 
-export async function registerRoutes(app: Express): Promise<Server> {
+export async function registerRoutes(app: Express, server?: Server): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
 
@@ -402,36 +402,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Setup WebSocket server for real-time logs
-  const httpServer = createServer(app);
+  const httpServer = server || createServer(app);
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
 
   wss.on('connection', (ws: WebSocket, req) => {
     console.log('WebSocket connection established');
     
-    ws.on('message', (data) => {
+    ws.on('message', async (data) => {
       try {
         const message = JSON.parse(data.toString());
         
-        if (message.type === 'subscribe_run') {
-          // Subscribe to run updates
-          const runId = message.runId;
+        if (message.type === 'subscribe_run' && message.runId) {
+          // Store runId on the WebSocket connection
+          (ws as any).runId = message.runId;
+          
+          // Verify the run exists
+          const run = await storage.getRun(message.runId);
+          if (!run) {
+            ws.send(JSON.stringify({
+              type: 'error',
+              message: 'Run not found'
+            }));
+            return;
+          }
+          
+          // Send current run status
+          ws.send(JSON.stringify({
+            type: 'run_status',
+            data: {
+              status: run.status,
+              sessionId: run.sessionId,
+              createdAt: run.createdAt,
+              completedAt: run.completedAt
+            }
+          }));
+          
+          // Send existing logs for this run
+          const logs = await storage.getLogs(message.runId);
+          logs.forEach(log => {
+            ws.send(JSON.stringify({
+              type: 'log',
+              data: {
+                id: log.id,
+                timestamp: log.ts,
+                level: log.level,
+                tags: log.tags,
+                message: log.message,
+                payload: log.payload
+              }
+            }));
+          });
+          
           ws.send(JSON.stringify({
             type: 'subscribed',
-            runId: runId
+            runId: message.runId
           }));
+          
+          console.log(`Client subscribed to run ${message.runId}`);
         }
       } catch (error) {
         console.error('WebSocket message error:', error);
+        ws.send(JSON.stringify({
+          type: 'error',
+          message: 'Invalid message format'
+        }));
       }
     });
 
     ws.on('close', () => {
       console.log('WebSocket connection closed');
     });
+    
+    ws.on('error', (error) => {
+      console.error('WebSocket error:', error);
+    });
   });
 
   // Store WebSocket server for execution engine to broadcast logs
   (httpServer as any).wss = wss;
+  executionEngine.setWebSocketServer(wss);
 
   return httpServer;
 }
