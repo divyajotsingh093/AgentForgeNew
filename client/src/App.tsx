@@ -13,6 +13,7 @@ import Agents from "@/pages/agents";
 import Tools from "@/pages/tools";
 import Runs from "@/pages/runs";
 import Templates from "@/pages/templates";
+import Integrations from "@/pages/integrations";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -38,6 +39,7 @@ function Router() {
           <Route path="/tools" component={Tools} />
           <Route path="/runs" component={Runs} />
           <Route path="/templates" component={Templates} />
+          <Route path="/integrations" component={Integrations} />
         </>
       )}
       <Route component={NotFound} />
