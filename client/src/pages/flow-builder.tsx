@@ -12,6 +12,7 @@ import ComponentLibrary from "@/components/flow/component-library";
 import FlowCanvas from "@/components/flow/flow-canvas";
 import RunConsole from "@/components/flow/run-console";
 import TextToAgentModal from "@/components/modals/text-to-agent-modal";
+import type { Flow } from "@shared/schema";
 
 export default function FlowBuilder() {
   const { id } = useParams();
@@ -39,7 +40,7 @@ export default function FlowBuilder() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  const { data: flow, isLoading: flowLoading, error } = useQuery({
+  const { data: flow, isLoading: flowLoading, error } = useQuery<Flow>({
     queryKey: ["/api/flows", id],
     enabled: !!id,
     retry: false,
@@ -203,12 +204,15 @@ export default function FlowBuilder() {
                   onClick={() => setLeftPanelOpen(false)}
                 />
                 <div className="fixed left-0 top-0 bottom-0 z-40 w-80">
-                  <ComponentLibrary onClose={() => setLeftPanelOpen(false)} />
+                  <ComponentLibrary 
+                    onClose={() => setLeftPanelOpen(false)} 
+                    projectId={flow?.projectId}
+                  />
                 </div>
               </>
             )
           ) : (
-            leftPanelOpen && <ComponentLibrary />
+            leftPanelOpen && <ComponentLibrary projectId={flow?.projectId} />
           )}
           
           {/* Center Panel - Flow Canvas */}

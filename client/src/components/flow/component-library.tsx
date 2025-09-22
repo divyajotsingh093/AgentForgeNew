@@ -3,19 +3,35 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import TemplateInstantiationModal from "@/components/modals/template-instantiation-modal";
-import type { Template } from "@shared/schema";
+import type { Template, Agent, Project } from "@shared/schema";
 
 interface ComponentLibraryProps {
   onClose?: () => void;
+  projectId?: string;
 }
 
-export default function ComponentLibrary({ onClose }: ComponentLibraryProps) {
+export default function ComponentLibrary({ onClose, projectId }: ComponentLibraryProps) {
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [showInstantiationModal, setShowInstantiationModal] = useState(false);
 
   // Fetch real templates from API
   const { data: templates = [] } = useQuery<Template[]>({
     queryKey: ["/api/templates"],
+  });
+
+  // Fetch user's projects to get the first project if no projectId provided
+  const { data: projects = [] } = useQuery<Project[]>({
+    queryKey: ["/api/projects"],
+    enabled: !projectId,
+  });
+
+  // Use provided projectId or fall back to first project
+  const effectiveProjectId = projectId || (projects.length > 0 ? projects[0].id : '');
+
+  // Fetch published agents for multi-agent workflows
+  const { data: publishedAgents = [] } = useQuery<Agent[]>({
+    queryKey: ["/api/projects", effectiveProjectId, "agents"],
+    enabled: !!effectiveProjectId,
   });
 
   const handleTemplateClick = (template: Template) => {
@@ -99,11 +115,48 @@ export default function ComponentLibrary({ onClose }: ComponentLibraryProps) {
 
       {/* Panel Content */}
       <div className="flex-1 overflow-auto">
-        {/* Agents Section */}
-        <div className="p-4">
+        {/* Multi Agent Section - Published Agents */}
+        {publishedAgents.length > 0 && (
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+                Multi Agent
+              </h4>
+              <span className="text-xs text-muted-foreground">
+                {publishedAgents.length} published
+              </span>
+            </div>
+            
+            <div className="space-y-2">
+              {publishedAgents.map((agent) => (
+                <Card
+                  key={agent.id}
+                  className="p-3 cursor-grab hover:border-primary transition-colors bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-950/20 dark:to-purple-950/20"
+                  draggable
+                  data-testid={`published-agent-${agent.id}`}
+                >
+                  <CardContent className="p-0">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-md flex items-center justify-center">
+                        <i className="fas fa-robot text-white text-sm"></i>
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-medium text-sm">{agent.name}</div>
+                        <div className="text-xs text-muted-foreground line-clamp-2">{agent.description}</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Template Agents Section */}
+        <div className="p-4 border-t border-border">
           <div className="flex items-center justify-between mb-3">
             <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-              Agents
+              Template Agents
             </h4>
             <Button 
               variant="ghost" 
@@ -121,7 +174,7 @@ export default function ComponentLibrary({ onClose }: ComponentLibraryProps) {
                 key={agent.id}
                 className="p-3 cursor-grab hover:border-primary transition-colors"
                 draggable
-                data-testid={`agent-${agent.id}`}
+                data-testid={`template-agent-${agent.id}`}
               >
                 <CardContent className="p-0">
                   <div className="flex items-center gap-3">
