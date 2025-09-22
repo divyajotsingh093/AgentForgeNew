@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import FlowBuilder from "@/pages/flow-builder";
+import AgentBuilder from "@/pages/agent-builder";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -28,6 +29,7 @@ function Router() {
         <>
           <Route path="/" component={Dashboard} />
           <Route path="/flow-builder/:id?" component={FlowBuilder} />
+          <Route path="/agent-builder/:id?" component={AgentBuilder} />
         </>
       )}
       <Route component={NotFound} />

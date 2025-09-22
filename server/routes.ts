@@ -1,13 +1,48 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
+import multer from "multer";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./auth0";
 import { executionEngine } from "./executionEngine";
-import { insertProjectSchema, insertAgentSchema, insertToolSchema, insertFlowSchema, insertRunSchema, insertStepSchema, insertSecretSchema } from "@shared/schema";
+import { EmbeddingService } from "./embeddingService";
+import { 
+  insertProjectSchema, insertAgentSchema, insertToolSchema, insertFlowSchema, insertRunSchema, insertStepSchema, insertSecretSchema,
+  insertKnowledgeBaseSchema, insertKnowledgeItemSchema, insertEmbeddingSchema,
+  insertDataSourceSchema, insertDataConnectionSchema, insertAgentIntegrationSchema,
+  insertAutonomousTriggerSchema, insertTriggerEventSchema, insertUiComponentSchema, insertAgentUiSchema
+} from "@shared/schema";
 import { seedAllTemplates } from "./seedTemplates";
 
 export async function registerRoutes(app: Express, server?: Server): Promise<Server> {
+  // Configure multer for file uploads
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB limit
+    },
+    fileFilter: (req, file, cb) => {
+      // Allow text files, code files, and documents
+      const allowedTypes = [
+        'text/plain',
+        'text/markdown',
+        'text/csv',
+        'application/json',
+        'application/javascript',
+        'application/typescript',
+        'text/html',
+        'text/css',
+        'text/xml'
+      ];
+      
+      if (allowedTypes.includes(file.mimetype) || file.mimetype.startsWith('text/')) {
+        cb(null, true);
+      } else {
+        cb(new Error(`File type ${file.mimetype} is not supported`), false);
+      }
+    }
+  });
+
   // Auth middleware
   await setupAuth(app);
 
@@ -61,9 +96,18 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
   });
 
   // Agent routes
-  app.get('/api/projects/:projectId/agents', isAuthenticated, async (req, res) => {
+  app.get('/api/projects/:projectId/agents', isAuthenticated, async (req: any, res) => {
     try {
-      const agents = await storage.getAgents(req.params.projectId);
+      const userId = req.user.id;
+      const projectId = req.params.projectId;
+      
+      // Validate project ownership
+      const project = await storage.getProject(projectId);
+      if (!project || project.userId !== userId) {
+        return res.status(403).json({ message: "Project access denied" });
+      }
+      
+      const agents = await storage.getAgents(projectId);
       res.json(agents);
     } catch (error) {
       console.error("Error fetching agents:", error);
@@ -71,9 +115,18 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
     }
   });
 
-  app.post('/api/projects/:projectId/agents', isAuthenticated, async (req, res) => {
+  app.post('/api/projects/:projectId/agents', isAuthenticated, async (req: any, res) => {
     try {
-      const agentData = insertAgentSchema.parse({ ...req.body, projectId: req.params.projectId });
+      const userId = req.user.id;
+      const projectId = req.params.projectId;
+      
+      // Validate project ownership
+      const project = await storage.getProject(projectId);
+      if (!project || project.userId !== userId) {
+        return res.status(403).json({ message: "Project access denied" });
+      }
+      
+      const agentData = insertAgentSchema.parse({ ...req.body, projectId });
       const agent = await storage.createAgent(agentData);
       res.json(agent);
     } catch (error) {
@@ -82,14 +135,656 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
     }
   });
 
-  app.put('/api/agents/:id', isAuthenticated, async (req, res) => {
+  app.put('/api/agents/:id', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.id;
+      const agentId = req.params.id;
+      
+      // Validate agent ownership through project
+      const agent = await storage.getAgent(agentId);
+      if (!agent) {
+        return res.status(404).json({ message: "Agent not found" });
+      }
+      
+      const project = await storage.getProject(agent.projectId);
+      if (!project || project.userId !== userId) {
+        return res.status(403).json({ message: "Agent access denied" });
+      }
+      
       const updates = insertAgentSchema.partial().parse(req.body);
-      const agent = await storage.updateAgent(req.params.id, updates);
-      res.json(agent);
+      const updatedAgent = await storage.updateAgent(agentId, updates);
+      res.json(updatedAgent);
     } catch (error) {
       console.error("Error updating agent:", error);
       res.status(500).json({ message: "Failed to update agent" });
+    }
+  });
+
+  app.get('/api/agents/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const agentId = req.params.id;
+      
+      const agent = await storage.getAgent(agentId);
+      if (!agent) {
+        return res.status(404).json({ message: "Agent not found" });
+      }
+      
+      // Validate agent ownership through project
+      const project = await storage.getProject(agent.projectId);
+      if (!project || project.userId !== userId) {
+        return res.status(403).json({ message: "Agent access denied" });
+      }
+      
+      res.json(agent);
+    } catch (error) {
+      console.error("Error fetching agent:", error);
+      res.status(500).json({ message: "Failed to fetch agent" });
+    }
+  });
+
+  // Knowledge Base routes
+  app.get('/api/agents/:agentId/knowledge-bases', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const agentId = req.params.agentId;
+      
+      // Validate agent ownership through project
+      const agent = await storage.getAgent(agentId);
+      if (!agent) {
+        return res.status(404).json({ message: "Agent not found" });
+      }
+      
+      const project = await storage.getProject(agent.projectId);
+      if (!project || project.userId !== userId) {
+        return res.status(403).json({ message: "Agent access denied" });
+      }
+      
+      const knowledgeBases = await storage.getKnowledgeBases(agentId);
+      res.json(knowledgeBases);
+    } catch (error) {
+      console.error("Error fetching knowledge bases:", error);
+      res.status(500).json({ message: "Failed to fetch knowledge bases" });
+    }
+  });
+
+  app.post('/api/agents/:agentId/knowledge-bases', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const agentId = req.params.agentId;
+      
+      // Validate agent ownership through project
+      const agent = await storage.getAgent(agentId);
+      if (!agent) {
+        return res.status(404).json({ message: "Agent not found" });
+      }
+      
+      const project = await storage.getProject(agent.projectId);
+      if (!project || project.userId !== userId) {
+        return res.status(403).json({ message: "Agent access denied" });
+      }
+      
+      const knowledgeBaseData = insertKnowledgeBaseSchema.parse({ 
+        ...req.body, 
+        agentId 
+      });
+      const knowledgeBase = await storage.createKnowledgeBase(knowledgeBaseData);
+      res.json(knowledgeBase);
+    } catch (error) {
+      console.error("Error creating knowledge base:", error);
+      res.status(500).json({ message: "Failed to create knowledge base" });
+    }
+  });
+
+  app.put('/api/knowledge-bases/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const knowledgeBaseId = req.params.id;
+      
+      // Validate knowledge base ownership through agent and project
+      const knowledgeBase = await storage.getKnowledgeBase(knowledgeBaseId);
+      if (!knowledgeBase) {
+        return res.status(404).json({ message: "Knowledge base not found" });
+      }
+      
+      const agent = await storage.getAgent(knowledgeBase.agentId);
+      if (!agent) {
+        return res.status(404).json({ message: "Agent not found" });
+      }
+      
+      const project = await storage.getProject(agent.projectId);
+      if (!project || project.userId !== userId) {
+        return res.status(403).json({ message: "Knowledge base access denied" });
+      }
+      
+      const updates = insertKnowledgeBaseSchema.partial().parse(req.body);
+      const updatedKnowledgeBase = await storage.updateKnowledgeBase(knowledgeBaseId, updates);
+      res.json(updatedKnowledgeBase);
+    } catch (error) {
+      console.error("Error updating knowledge base:", error);
+      res.status(500).json({ message: "Failed to update knowledge base" });
+    }
+  });
+
+  app.delete('/api/knowledge-bases/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const knowledgeBaseId = req.params.id;
+      
+      // Validate knowledge base ownership through agent and project
+      const knowledgeBase = await storage.getKnowledgeBase(knowledgeBaseId);
+      if (!knowledgeBase) {
+        return res.status(404).json({ message: "Knowledge base not found" });
+      }
+      
+      const agent = await storage.getAgent(knowledgeBase.agentId);
+      if (!agent) {
+        return res.status(404).json({ message: "Agent not found" });
+      }
+      
+      const project = await storage.getProject(agent.projectId);
+      if (!project || project.userId !== userId) {
+        return res.status(403).json({ message: "Knowledge base access denied" });
+      }
+      
+      await storage.deleteKnowledgeBase(knowledgeBaseId);
+      res.json({ message: "Knowledge base deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting knowledge base:", error);
+      res.status(500).json({ message: "Failed to delete knowledge base" });
+    }
+  });
+
+  // Knowledge Item routes
+  app.get('/api/knowledge-bases/:knowledgeBaseId/items', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const knowledgeBaseId = req.params.knowledgeBaseId;
+      
+      // Validate knowledge base ownership through agent and project
+      const knowledgeBase = await storage.getKnowledgeBase(knowledgeBaseId);
+      if (!knowledgeBase) {
+        return res.status(404).json({ message: "Knowledge base not found" });
+      }
+      
+      const agent = await storage.getAgent(knowledgeBase.agentId);
+      if (!agent) {
+        return res.status(404).json({ message: "Agent not found" });
+      }
+      
+      const project = await storage.getProject(agent.projectId);
+      if (!project || project.userId !== userId) {
+        return res.status(403).json({ message: "Knowledge base access denied" });
+      }
+      
+      const items = await storage.getKnowledgeItems(knowledgeBaseId);
+      res.json(items);
+    } catch (error) {
+      console.error("Error fetching knowledge items:", error);
+      res.status(500).json({ message: "Failed to fetch knowledge items" });
+    }
+  });
+
+  app.post('/api/knowledge-bases/:knowledgeBaseId/items', isAuthenticated, async (req, res) => {
+    try {
+      const itemData = insertKnowledgeItemSchema.parse({
+        ...req.body,
+        knowledgeBaseId: req.params.knowledgeBaseId
+      });
+      const item = await storage.createKnowledgeItem(itemData);
+      res.json(item);
+    } catch (error) {
+      console.error("Error creating knowledge item:", error);
+      res.status(500).json({ message: "Failed to create knowledge item" });
+    }
+  });
+
+  app.put('/api/knowledge-items/:id', isAuthenticated, async (req, res) => {
+    try {
+      const updates = insertKnowledgeItemSchema.partial().parse(req.body);
+      const item = await storage.updateKnowledgeItem(req.params.id, updates);
+      res.json(item);
+    } catch (error) {
+      console.error("Error updating knowledge item:", error);
+      res.status(500).json({ message: "Failed to update knowledge item" });
+    }
+  });
+
+  app.delete('/api/knowledge-items/:id', isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteKnowledgeItem(req.params.id);
+      res.json({ message: "Knowledge item deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting knowledge item:", error);
+      res.status(500).json({ message: "Failed to delete knowledge item" });
+    }
+  });
+
+  // File upload and processing route
+  app.post('/api/knowledge-bases/:knowledgeBaseId/upload', 
+    isAuthenticated, 
+    upload.single('file'), 
+    async (req: any, res) => {
+      try {
+        const userId = req.user.id;
+        const knowledgeBaseId = req.params.knowledgeBaseId;
+        
+        // Validate knowledge base ownership through agent and project
+        const knowledgeBase = await storage.getKnowledgeBase(knowledgeBaseId);
+        if (!knowledgeBase) {
+          return res.status(404).json({ message: "Knowledge base not found" });
+        }
+        
+        const agent = await storage.getAgent(knowledgeBase.agentId);
+        if (!agent) {
+          return res.status(404).json({ message: "Agent not found" });
+        }
+        
+        const project = await storage.getProject(agent.projectId);
+        if (!project || project.userId !== userId) {
+          return res.status(403).json({ message: "Knowledge base access denied" });
+        }
+        
+        // Check if file was uploaded
+        if (!req.file) {
+          return res.status(400).json({ message: "No file uploaded" });
+        }
+        
+        // Process the uploaded file with embeddings
+        try {
+          console.log(`🔄 Starting file processing for ${req.file.originalname}...`);
+          
+          const result = await EmbeddingService.processUploadedFile(
+            knowledgeBaseId,
+            req.file
+          );
+          
+          console.log(`✅ File processing completed: ${result.knowledgeItems.length} items, ${result.embeddings.length} embeddings`);
+          
+          res.json({
+            message: "File uploaded and processed successfully",
+            knowledgeItems: result.knowledgeItems,
+            embeddings: result.embeddings.length,
+            totalChunks: result.totalChunks,
+            filename: req.file.originalname,
+            size: req.file.size,
+            mimeType: req.file.mimetype
+          });
+        } catch (processingError) {
+          console.error("Error processing file:", processingError);
+          
+          // Create a basic knowledge item as fallback
+          const fallbackItemData = insertKnowledgeItemSchema.parse({
+            knowledgeBaseId,
+            type: 'file',
+            title: req.file.originalname,
+            content: EmbeddingService.extractTextFromFile(
+              req.file.buffer,
+              req.file.mimetype,
+              req.file.originalname
+            ),
+            metadata: {
+              mimeType: req.file.mimetype,
+              filename: req.file.originalname,
+              uploadedAt: new Date().toISOString(),
+              size: req.file.size,
+              processingError: processingError.message,
+              processingFailed: true
+            }
+          });
+          
+          const fallbackItem = await storage.createKnowledgeItem(fallbackItemData);
+          
+          res.json({
+            message: "File uploaded but processing failed - saved as basic item",
+            knowledgeItems: [fallbackItem],
+            embeddings: 0,
+            totalChunks: 0,
+            filename: req.file.originalname,
+            size: req.file.size,
+            mimeType: req.file.mimetype,
+            warning: "Embedding generation failed",
+            error: processingError.message
+          });
+        }
+      } catch (error) {
+        console.error("Error uploading file:", error);
+        res.status(500).json({ 
+          message: "Failed to upload file",
+          error: error.message 
+        });
+      }
+    }
+  );
+
+  // Embedding search route
+  app.post('/api/knowledge-bases/:knowledgeBaseId/search', isAuthenticated, async (req, res) => {
+    try {
+      const { query, limit = 10 } = req.body;
+      
+      if (!query) {
+        return res.status(400).json({ message: "Search query is required" });
+      }
+      
+      // TODO: Implement proper vector search
+      // For now, return empty results
+      const results = await storage.searchEmbeddings(query, limit);
+      res.json(results);
+    } catch (error) {
+      console.error("Error searching knowledge base:", error);
+      res.status(500).json({ message: "Failed to search knowledge base" });
+    }
+  });
+
+  // Data Source routes (Data Fabric)
+  app.get('/api/projects/:projectId/data-sources', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const projectId = req.params.projectId;
+      
+      // Validate project ownership
+      const project = await storage.getProject(projectId);
+      if (!project || project.userId !== userId) {
+        return res.status(403).json({ message: "Project access denied" });
+      }
+      
+      const dataSources = await storage.getDataSources(projectId);
+      res.json(dataSources);
+    } catch (error) {
+      console.error("Error fetching data sources:", error);
+      res.status(500).json({ message: "Failed to fetch data sources" });
+    }
+  });
+
+  app.post('/api/projects/:projectId/data-sources', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const projectId = req.params.projectId;
+      
+      // Validate project ownership
+      const project = await storage.getProject(projectId);
+      if (!project || project.userId !== userId) {
+        return res.status(403).json({ message: "Project access denied" });
+      }
+      
+      const dataSourceData = insertDataSourceSchema.parse({ 
+        ...req.body, 
+        projectId 
+      });
+      const dataSource = await storage.createDataSource(dataSourceData);
+      res.json(dataSource);
+    } catch (error) {
+      console.error("Error creating data source:", error);
+      res.status(500).json({ message: "Failed to create data source" });
+    }
+  });
+
+  app.put('/api/data-sources/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const dataSourceId = req.params.id;
+      
+      // Validate data source ownership through project
+      const dataSource = await storage.getDataSource(dataSourceId);
+      if (!dataSource) {
+        return res.status(404).json({ message: "Data source not found" });
+      }
+      
+      const project = await storage.getProject(dataSource.projectId);
+      if (!project || project.userId !== userId) {
+        return res.status(403).json({ message: "Data source access denied" });
+      }
+      
+      const updates = insertDataSourceSchema.partial().parse(req.body);
+      const updatedDataSource = await storage.updateDataSource(dataSourceId, updates);
+      res.json(updatedDataSource);
+    } catch (error) {
+      console.error("Error updating data source:", error);
+      res.status(500).json({ message: "Failed to update data source" });
+    }
+  });
+
+  app.delete('/api/data-sources/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const dataSourceId = req.params.id;
+      
+      // Validate data source ownership through project
+      const dataSource = await storage.getDataSource(dataSourceId);
+      if (!dataSource) {
+        return res.status(404).json({ message: "Data source not found" });
+      }
+      
+      const project = await storage.getProject(dataSource.projectId);
+      if (!project || project.userId !== userId) {
+        return res.status(403).json({ message: "Data source access denied" });
+      }
+      
+      await storage.deleteDataSource(dataSourceId);
+      res.json({ message: "Data source deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting data source:", error);
+      res.status(500).json({ message: "Failed to delete data source" });
+    }
+  });
+
+  // Data Connection routes
+  app.get('/api/agents/:agentId/data-connections', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const agentId = req.params.agentId;
+      
+      // Validate agent ownership through project
+      const agent = await storage.getAgent(agentId);
+      if (!agent) {
+        return res.status(404).json({ message: "Agent not found" });
+      }
+      
+      const project = await storage.getProject(agent.projectId);
+      if (!project || project.userId !== userId) {
+        return res.status(403).json({ message: "Agent access denied" });
+      }
+      
+      const connections = await storage.getDataConnections(agentId);
+      res.json(connections);
+    } catch (error) {
+      console.error("Error fetching data connections:", error);
+      res.status(500).json({ message: "Failed to fetch data connections" });
+    }
+  });
+
+  app.post('/api/agents/:agentId/data-connections', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const agentId = req.params.agentId;
+      
+      // Validate agent ownership through project
+      const agent = await storage.getAgent(agentId);
+      if (!agent) {
+        return res.status(404).json({ message: "Agent not found" });
+      }
+      
+      const project = await storage.getProject(agent.projectId);
+      if (!project || project.userId !== userId) {
+        return res.status(403).json({ message: "Agent access denied" });
+      }
+      
+      const connectionData = insertDataConnectionSchema.parse({
+        ...req.body,
+        agentId
+      });
+      const connection = await storage.createDataConnection(connectionData);
+      res.json(connection);
+    } catch (error) {
+      console.error("Error creating data connection:", error);
+      res.status(500).json({ message: "Failed to create data connection" });
+    }
+  });
+
+  app.put('/api/data-connections/:id', isAuthenticated, async (req, res) => {
+    try {
+      const updates = insertDataConnectionSchema.partial().parse(req.body);
+      const connection = await storage.updateDataConnection(req.params.id, updates);
+      res.json(connection);
+    } catch (error) {
+      console.error("Error updating data connection:", error);
+      res.status(500).json({ message: "Failed to update data connection" });
+    }
+  });
+
+  app.delete('/api/data-connections/:id', isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteDataConnection(req.params.id);
+      res.json({ message: "Data connection deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting data connection:", error);
+      res.status(500).json({ message: "Failed to delete data connection" });
+    }
+  });
+
+  // Autonomous Triggers routes
+  app.get('/api/agents/:agentId/triggers', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const agentId = req.params.agentId;
+      
+      // Validate agent ownership through project
+      const agent = await storage.getAgent(agentId);
+      if (!agent) {
+        return res.status(404).json({ message: "Agent not found" });
+      }
+      
+      const project = await storage.getProject(agent.projectId);
+      if (!project || project.userId !== userId) {
+        return res.status(403).json({ message: "Agent access denied" });
+      }
+      
+      const triggers = await storage.getTriggers(agentId);
+      res.json(triggers);
+    } catch (error) {
+      console.error("Error fetching triggers:", error);
+      res.status(500).json({ message: "Failed to fetch triggers" });
+    }
+  });
+
+  app.post('/api/agents/:agentId/triggers', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const agentId = req.params.agentId;
+      
+      // Validate agent ownership through project
+      const agent = await storage.getAgent(agentId);
+      if (!agent) {
+        return res.status(404).json({ message: "Agent not found" });
+      }
+      
+      const project = await storage.getProject(agent.projectId);
+      if (!project || project.userId !== userId) {
+        return res.status(403).json({ message: "Agent access denied" });
+      }
+      
+      const triggerData = insertAutonomousTriggerSchema.parse({
+        ...req.body,
+        agentId
+      });
+      const trigger = await storage.createTrigger(triggerData);
+      res.json(trigger);
+    } catch (error) {
+      console.error("Error creating trigger:", error);
+      res.status(500).json({ message: "Failed to create trigger" });
+    }
+  });
+
+  app.put('/api/triggers/:id', isAuthenticated, async (req, res) => {
+    try {
+      const updates = insertAutonomousTriggerSchema.partial().parse(req.body);
+      const trigger = await storage.updateTrigger(req.params.id, updates);
+      res.json(trigger);
+    } catch (error) {
+      console.error("Error updating trigger:", error);
+      res.status(500).json({ message: "Failed to update trigger" });
+    }
+  });
+
+  app.delete('/api/triggers/:id', isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteTrigger(req.params.id);
+      res.json({ message: "Trigger deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting trigger:", error);
+      res.status(500).json({ message: "Failed to delete trigger" });
+    }
+  });
+
+  // Trigger execution endpoint
+  app.post('/api/triggers/:id/execute', isAuthenticated, async (req, res) => {
+    try {
+      const trigger = await storage.getTrigger(req.params.id);
+      if (!trigger) {
+        return res.status(404).json({ message: "Trigger not found" });
+      }
+
+      // TODO: Implement trigger execution logic
+      // This would integrate with the execution engine
+      
+      const eventData = insertTriggerEventSchema.parse({
+        triggerId: req.params.id,
+        eventType: 'manual',
+        payload: req.body,
+        status: 'triggered'
+      });
+      
+      const event = await storage.createTriggerEvent(eventData);
+      res.json({ message: "Trigger executed successfully", event });
+    } catch (error) {
+      console.error("Error executing trigger:", error);
+      res.status(500).json({ message: "Failed to execute trigger" });
+    }
+  });
+
+  // UI Components routes
+  app.get('/api/agent-uis/:agentUiId/components', isAuthenticated, async (req, res) => {
+    try {
+      const components = await storage.getUiComponents(req.params.agentUiId);
+      res.json(components);
+    } catch (error) {
+      console.error("Error fetching UI components:", error);
+      res.status(500).json({ message: "Failed to fetch UI components" });
+    }
+  });
+
+  app.post('/api/agent-uis/:agentUiId/components', isAuthenticated, async (req, res) => {
+    try {
+      const componentData = insertUiComponentSchema.parse({
+        ...req.body,
+        agentUiId: req.params.agentUiId
+      });
+      const component = await storage.createUiComponent(componentData);
+      res.json(component);
+    } catch (error) {
+      console.error("Error creating UI component:", error);
+      res.status(500).json({ message: "Failed to create UI component" });
+    }
+  });
+
+  app.put('/api/ui-components/:id', isAuthenticated, async (req, res) => {
+    try {
+      const updates = insertUiComponentSchema.partial().parse(req.body);
+      const component = await storage.updateUiComponent(req.params.id, updates);
+      res.json(component);
+    } catch (error) {
+      console.error("Error updating UI component:", error);
+      res.status(500).json({ message: "Failed to update UI component" });
+    }
+  });
+
+  app.delete('/api/ui-components/:id', isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteUiComponent(req.params.id);
+      res.json({ message: "UI component deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting UI component:", error);
+      res.status(500).json({ message: "Failed to delete UI component" });
     }
   });
 
@@ -376,6 +1071,386 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
     } catch (error) {
       console.error("Error instantiating template:", error);
       res.status(500).json({ message: "Failed to instantiate template" });
+    }
+  });
+
+  // Agent-specific route to get single agent
+  app.get('/api/agents/:id', isAuthenticated, async (req, res) => {
+    try {
+      const agent = await storage.getAgent(req.params.id);
+      if (!agent) {
+        return res.status(404).json({ message: "Agent not found" });
+      }
+      res.json(agent);
+    } catch (error) {
+      console.error("Error fetching agent:", error);
+      res.status(500).json({ message: "Failed to fetch agent" });
+    }
+  });
+
+  // Knowledge Base routes
+  app.get('/api/agents/:agentId/knowledge-bases', isAuthenticated, async (req, res) => {
+    try {
+      const knowledgeBases = await storage.getKnowledgeBases(req.params.agentId);
+      res.json(knowledgeBases);
+    } catch (error) {
+      console.error("Error fetching knowledge bases:", error);
+      res.status(500).json({ message: "Failed to fetch knowledge bases" });
+    }
+  });
+
+  app.post('/api/agents/:agentId/knowledge-bases', isAuthenticated, async (req, res) => {
+    try {
+      const knowledgeBaseData = insertKnowledgeBaseSchema.parse({ ...req.body, agentId: req.params.agentId });
+      const knowledgeBase = await storage.createKnowledgeBase(knowledgeBaseData);
+      res.json(knowledgeBase);
+    } catch (error) {
+      console.error("Error creating knowledge base:", error);
+      res.status(500).json({ message: "Failed to create knowledge base" });
+    }
+  });
+
+  app.put('/api/knowledge-bases/:id', isAuthenticated, async (req, res) => {
+    try {
+      const updates = insertKnowledgeBaseSchema.partial().parse(req.body);
+      const knowledgeBase = await storage.updateKnowledgeBase(req.params.id, updates);
+      res.json(knowledgeBase);
+    } catch (error) {
+      console.error("Error updating knowledge base:", error);
+      res.status(500).json({ message: "Failed to update knowledge base" });
+    }
+  });
+
+  app.delete('/api/knowledge-bases/:id', isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteKnowledgeBase(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting knowledge base:", error);
+      res.status(500).json({ message: "Failed to delete knowledge base" });
+    }
+  });
+
+  // Knowledge Item routes
+  app.get('/api/knowledge-bases/:knowledgeBaseId/items', isAuthenticated, async (req, res) => {
+    try {
+      const knowledgeItems = await storage.getKnowledgeItems(req.params.knowledgeBaseId);
+      res.json(knowledgeItems);
+    } catch (error) {
+      console.error("Error fetching knowledge items:", error);
+      res.status(500).json({ message: "Failed to fetch knowledge items" });
+    }
+  });
+
+  app.post('/api/knowledge-bases/:knowledgeBaseId/items', isAuthenticated, async (req, res) => {
+    try {
+      const knowledgeItemData = insertKnowledgeItemSchema.parse({ ...req.body, knowledgeBaseId: req.params.knowledgeBaseId });
+      const knowledgeItem = await storage.createKnowledgeItem(knowledgeItemData);
+      res.json(knowledgeItem);
+    } catch (error) {
+      console.error("Error creating knowledge item:", error);
+      res.status(500).json({ message: "Failed to create knowledge item" });
+    }
+  });
+
+  app.put('/api/knowledge-items/:id', isAuthenticated, async (req, res) => {
+    try {
+      const updates = insertKnowledgeItemSchema.partial().parse(req.body);
+      const knowledgeItem = await storage.updateKnowledgeItem(req.params.id, updates);
+      res.json(knowledgeItem);
+    } catch (error) {
+      console.error("Error updating knowledge item:", error);
+      res.status(500).json({ message: "Failed to update knowledge item" });
+    }
+  });
+
+  app.delete('/api/knowledge-items/:id', isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteKnowledgeItem(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting knowledge item:", error);
+      res.status(500).json({ message: "Failed to delete knowledge item" });
+    }
+  });
+
+  // Data Source routes
+  app.get('/api/projects/:projectId/data-sources', isAuthenticated, async (req, res) => {
+    try {
+      const dataSources = await storage.getDataSources(req.params.projectId);
+      res.json(dataSources);
+    } catch (error) {
+      console.error("Error fetching data sources:", error);
+      res.status(500).json({ message: "Failed to fetch data sources" });
+    }
+  });
+
+  app.post('/api/projects/:projectId/data-sources', isAuthenticated, async (req, res) => {
+    try {
+      const dataSourceData = insertDataSourceSchema.parse({ ...req.body, projectId: req.params.projectId });
+      const dataSource = await storage.createDataSource(dataSourceData);
+      res.json(dataSource);
+    } catch (error) {
+      console.error("Error creating data source:", error);
+      res.status(500).json({ message: "Failed to create data source" });
+    }
+  });
+
+  app.put('/api/data-sources/:id', isAuthenticated, async (req, res) => {
+    try {
+      const updates = insertDataSourceSchema.partial().parse(req.body);
+      const dataSource = await storage.updateDataSource(req.params.id, updates);
+      res.json(dataSource);
+    } catch (error) {
+      console.error("Error updating data source:", error);
+      res.status(500).json({ message: "Failed to update data source" });
+    }
+  });
+
+  app.delete('/api/data-sources/:id', isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteDataSource(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting data source:", error);
+      res.status(500).json({ message: "Failed to delete data source" });
+    }
+  });
+
+  // Data Connection routes
+  app.get('/api/agents/:agentId/data-connections', isAuthenticated, async (req, res) => {
+    try {
+      const dataConnections = await storage.getDataConnections(req.params.agentId);
+      res.json(dataConnections);
+    } catch (error) {
+      console.error("Error fetching data connections:", error);
+      res.status(500).json({ message: "Failed to fetch data connections" });
+    }
+  });
+
+  app.post('/api/agents/:agentId/data-connections', isAuthenticated, async (req, res) => {
+    try {
+      const dataConnectionData = insertDataConnectionSchema.parse({ ...req.body, agentId: req.params.agentId });
+      const dataConnection = await storage.createDataConnection(dataConnectionData);
+      res.json(dataConnection);
+    } catch (error) {
+      console.error("Error creating data connection:", error);
+      res.status(500).json({ message: "Failed to create data connection" });
+    }
+  });
+
+  app.put('/api/data-connections/:id', isAuthenticated, async (req, res) => {
+    try {
+      const updates = insertDataConnectionSchema.partial().parse(req.body);
+      const dataConnection = await storage.updateDataConnection(req.params.id, updates);
+      res.json(dataConnection);
+    } catch (error) {
+      console.error("Error updating data connection:", error);
+      res.status(500).json({ message: "Failed to update data connection" });
+    }
+  });
+
+  app.delete('/api/data-connections/:id', isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteDataConnection(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting data connection:", error);
+      res.status(500).json({ message: "Failed to delete data connection" });
+    }
+  });
+
+  // Integration routes
+  app.get('/api/projects/:projectId/integrations', isAuthenticated, async (req, res) => {
+    try {
+      const integrations = await storage.getIntegrations(req.params.projectId);
+      res.json(integrations);
+    } catch (error) {
+      console.error("Error fetching integrations:", error);
+      res.status(500).json({ message: "Failed to fetch integrations" });
+    }
+  });
+
+  app.post('/api/projects/:projectId/integrations', isAuthenticated, async (req, res) => {
+    try {
+      const integrationData = insertAgentIntegrationSchema.parse({ ...req.body, agentId: req.params.agentId });
+      const integration = await storage.createIntegration(integrationData);
+      res.json(integration);
+    } catch (error) {
+      console.error("Error creating integration:", error);
+      res.status(500).json({ message: "Failed to create integration" });
+    }
+  });
+
+  app.put('/api/integrations/:id', isAuthenticated, async (req, res) => {
+    try {
+      const updates = insertAgentIntegrationSchema.partial().parse(req.body);
+      const integration = await storage.updateIntegration(req.params.id, updates);
+      res.json(integration);
+    } catch (error) {
+      console.error("Error updating integration:", error);
+      res.status(500).json({ message: "Failed to update integration" });
+    }
+  });
+
+  app.delete('/api/integrations/:id', isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteIntegration(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting integration:", error);
+      res.status(500).json({ message: "Failed to delete integration" });
+    }
+  });
+
+  // Trigger routes
+  app.get('/api/agents/:agentId/triggers', isAuthenticated, async (req, res) => {
+    try {
+      const triggers = await storage.getTriggers(req.params.agentId);
+      res.json(triggers);
+    } catch (error) {
+      console.error("Error fetching triggers:", error);
+      res.status(500).json({ message: "Failed to fetch triggers" });
+    }
+  });
+
+  app.post('/api/agents/:agentId/triggers', isAuthenticated, async (req, res) => {
+    try {
+      const triggerData = insertAutonomousTriggerSchema.parse({ ...req.body, agentId: req.params.agentId });
+      const trigger = await storage.createTrigger(triggerData);
+      res.json(trigger);
+    } catch (error) {
+      console.error("Error creating trigger:", error);
+      res.status(500).json({ message: "Failed to create trigger" });
+    }
+  });
+
+  app.put('/api/triggers/:id', isAuthenticated, async (req, res) => {
+    try {
+      const updates = insertAutonomousTriggerSchema.partial().parse(req.body);
+      const trigger = await storage.updateTrigger(req.params.id, updates);
+      res.json(trigger);
+    } catch (error) {
+      console.error("Error updating trigger:", error);
+      res.status(500).json({ message: "Failed to update trigger" });
+    }
+  });
+
+  app.delete('/api/triggers/:id', isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteTrigger(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting trigger:", error);
+      res.status(500).json({ message: "Failed to delete trigger" });
+    }
+  });
+
+  // Trigger Execution routes
+  app.get('/api/triggers/:triggerId/executions', isAuthenticated, async (req, res) => {
+    try {
+      const executions = await storage.getTriggerEvents(req.params.triggerId);
+      res.json(executions);
+    } catch (error) {
+      console.error("Error fetching trigger executions:", error);
+      res.status(500).json({ message: "Failed to fetch trigger executions" });
+    }
+  });
+
+  app.post('/api/triggers/:triggerId/executions', isAuthenticated, async (req, res) => {
+    try {
+      const executionData = insertTriggerEventSchema.parse({ ...req.body, triggerId: req.params.triggerId });
+      const execution = await storage.createTriggerEvent(executionData);
+      res.json(execution);
+    } catch (error) {
+      console.error("Error creating trigger execution:", error);
+      res.status(500).json({ message: "Failed to create trigger execution" });
+    }
+  });
+
+  // Frontend Component routes
+  app.get('/api/agents/:agentId/frontend-components', isAuthenticated, async (req, res) => {
+    try {
+      const components = await storage.getUiComponents(req.params.agentId);
+      res.json(components);
+    } catch (error) {
+      console.error("Error fetching frontend components:", error);
+      res.status(500).json({ message: "Failed to fetch frontend components" });
+    }
+  });
+
+  app.post('/api/agents/:agentId/frontend-components', isAuthenticated, async (req, res) => {
+    try {
+      const componentData = insertUiComponentSchema.parse({ ...req.body, agentUiId: req.params.agentUiId });
+      const component = await storage.createUiComponent(componentData);
+      res.json(component);
+    } catch (error) {
+      console.error("Error creating frontend component:", error);
+      res.status(500).json({ message: "Failed to create frontend component" });
+    }
+  });
+
+  app.put('/api/frontend-components/:id', isAuthenticated, async (req, res) => {
+    try {
+      const updates = insertUiComponentSchema.partial().parse(req.body);
+      const component = await storage.updateUiComponent(req.params.id, updates);
+      res.json(component);
+    } catch (error) {
+      console.error("Error updating frontend component:", error);
+      res.status(500).json({ message: "Failed to update frontend component" });
+    }
+  });
+
+  app.delete('/api/frontend-components/:id', isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteUiComponent(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting frontend component:", error);
+      res.status(500).json({ message: "Failed to delete frontend component" });
+    }
+  });
+
+  // Frontend Layout routes
+  app.get('/api/agents/:agentId/frontend-layouts', isAuthenticated, async (req, res) => {
+    try {
+      const layouts = await storage.getAgentUis(req.params.agentId);
+      res.json(layouts);
+    } catch (error) {
+      console.error("Error fetching frontend layouts:", error);
+      res.status(500).json({ message: "Failed to fetch frontend layouts" });
+    }
+  });
+
+  app.post('/api/agents/:agentId/frontend-layouts', isAuthenticated, async (req, res) => {
+    try {
+      const layoutData = insertAgentUiSchema.parse({ ...req.body, agentId: req.params.agentId });
+      const layout = await storage.createAgentUi(layoutData);
+      res.json(layout);
+    } catch (error) {
+      console.error("Error creating frontend layout:", error);
+      res.status(500).json({ message: "Failed to create frontend layout" });
+    }
+  });
+
+  app.put('/api/frontend-layouts/:id', isAuthenticated, async (req, res) => {
+    try {
+      const updates = insertAgentUiSchema.partial().parse(req.body);
+      const layout = await storage.updateAgentUi(req.params.id, updates);
+      res.json(layout);
+    } catch (error) {
+      console.error("Error updating frontend layout:", error);
+      res.status(500).json({ message: "Failed to update frontend layout" });
+    }
+  });
+
+  app.delete('/api/frontend-layouts/:id', isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteAgentUi(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting frontend layout:", error);
+      res.status(500).json({ message: "Failed to delete frontend layout" });
     }
   });
 

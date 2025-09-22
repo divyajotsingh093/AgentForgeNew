@@ -6,6 +6,7 @@ export default function Sidebar() {
 
   const navItems = [
     { path: "/", label: "Dashboard", icon: "fas fa-home" },
+    { path: "/agent-builder", label: "Agent Builder", icon: "fas fa-robot" },
     { path: "/flow-builder", label: "Flow Builder", icon: "fas fa-project-diagram" },
     { path: "/agents", label: "Agents", icon: "fas fa-users" },
     { path: "/tools", label: "Tools", icon: "fas fa-tools" },

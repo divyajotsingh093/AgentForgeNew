@@ -1,10 +1,22 @@
 import {
   users, projects, agents, tools, flows, steps, runs, logs, secrets, templates,
+  knowledgeBases, knowledgeItems, embeddings, dataSources, dataConnections,
+  agentIntegrations, autonomousTriggers, triggerEvents, uiComponents, agentUis,
   type User, type UpsertUser, type Project, type InsertProject,
   type Agent, type InsertAgent, type Tool, type InsertTool,
   type Flow, type InsertFlow, type Step, type InsertStep,
   type Run, type InsertRun, type Log, type InsertLog,
   type Secret, type InsertSecret, type Template, type InsertTemplate,
+  type KnowledgeBase, type InsertKnowledgeBase,
+  type KnowledgeItem, type InsertKnowledgeItem,
+  type Embedding, type InsertEmbedding,
+  type DataSource, type InsertDataSource,
+  type DataConnection, type InsertDataConnection,
+  type AgentIntegration, type InsertAgentIntegration,
+  type AutonomousTrigger, type InsertAutonomousTrigger,
+  type TriggerEvent, type InsertTriggerEvent,
+  type UiComponent, type InsertUiComponent,
+  type AgentUi, type InsertAgentUi,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc } from "drizzle-orm";
@@ -68,6 +80,72 @@ export interface IStorage {
   getTemplates(): Promise<Template[]>;
   getTemplate(id: string): Promise<Template | undefined>;
   createTemplate(template: InsertTemplate): Promise<Template>;
+
+  // Knowledge Base operations
+  getKnowledgeBases(agentId: string): Promise<KnowledgeBase[]>;
+  getKnowledgeBase(id: string): Promise<KnowledgeBase | undefined>;
+  createKnowledgeBase(knowledgeBase: InsertKnowledgeBase): Promise<KnowledgeBase>;
+  updateKnowledgeBase(id: string, updates: Partial<InsertKnowledgeBase>): Promise<KnowledgeBase>;
+  deleteKnowledgeBase(id: string): Promise<void>;
+
+  // Knowledge Item operations
+  getKnowledgeItems(knowledgeBaseId: string): Promise<KnowledgeItem[]>;
+  getKnowledgeItem(id: string): Promise<KnowledgeItem | undefined>;
+  createKnowledgeItem(knowledgeItem: InsertKnowledgeItem): Promise<KnowledgeItem>;
+  updateKnowledgeItem(id: string, updates: Partial<InsertKnowledgeItem>): Promise<KnowledgeItem>;
+  deleteKnowledgeItem(id: string): Promise<void>;
+
+  // Embedding operations
+  getEmbeddings(knowledgeItemId: string): Promise<Embedding[]>;
+  createEmbedding(embedding: InsertEmbedding): Promise<Embedding>;
+  searchEmbeddings(queryEmbedding: number[], limit: number, knowledgeBaseId?: string): Promise<Array<Embedding & { similarity: number }>>;
+
+  // Data Source operations
+  getDataSources(projectId: string): Promise<DataSource[]>;
+  getDataSource(id: string): Promise<DataSource | undefined>;
+  createDataSource(dataSource: InsertDataSource): Promise<DataSource>;
+  updateDataSource(id: string, updates: Partial<InsertDataSource>): Promise<DataSource>;
+  deleteDataSource(id: string): Promise<void>;
+
+  // Data Connection operations
+  getDataConnections(agentId: string): Promise<DataConnection[]>;
+  getDataConnection(id: string): Promise<DataConnection | undefined>;
+  createDataConnection(dataConnection: InsertDataConnection): Promise<DataConnection>;
+  updateDataConnection(id: string, updates: Partial<InsertDataConnection>): Promise<DataConnection>;
+  deleteDataConnection(id: string): Promise<void>;
+
+  // Integration operations
+  getIntegrations(agentId: string): Promise<AgentIntegration[]>;
+  getIntegration(id: string): Promise<AgentIntegration | undefined>;
+  createIntegration(integration: InsertAgentIntegration): Promise<AgentIntegration>;
+  updateIntegration(id: string, updates: Partial<InsertAgentIntegration>): Promise<AgentIntegration>;
+  deleteIntegration(id: string): Promise<void>;
+
+  // Trigger operations
+  getTriggers(agentId: string): Promise<AutonomousTrigger[]>;
+  getTrigger(id: string): Promise<AutonomousTrigger | undefined>;
+  createTrigger(trigger: InsertAutonomousTrigger): Promise<AutonomousTrigger>;
+  updateTrigger(id: string, updates: Partial<InsertAutonomousTrigger>): Promise<AutonomousTrigger>;
+  deleteTrigger(id: string): Promise<void>;
+
+  // Trigger Event operations
+  getTriggerEvents(triggerId: string): Promise<TriggerEvent[]>;
+  createTriggerEvent(event: InsertTriggerEvent): Promise<TriggerEvent>;
+  updateTriggerEvent(id: string, updates: Partial<InsertTriggerEvent>): Promise<TriggerEvent>;
+
+  // UI Component operations
+  getUiComponents(agentUiId: string): Promise<UiComponent[]>;
+  getUiComponent(id: string): Promise<UiComponent | undefined>;
+  createUiComponent(component: InsertUiComponent): Promise<UiComponent>;
+  updateUiComponent(id: string, updates: Partial<InsertUiComponent>): Promise<UiComponent>;
+  deleteUiComponent(id: string): Promise<void>;
+
+  // Agent UI operations
+  getAgentUis(agentId: string): Promise<AgentUi[]>;
+  getAgentUi(id: string): Promise<AgentUi | undefined>;
+  createAgentUi(agentUi: InsertAgentUi): Promise<AgentUi>;
+  updateAgentUi(id: string, updates: Partial<InsertAgentUi>): Promise<AgentUi>;
+  deleteAgentUi(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -335,6 +413,288 @@ export class DatabaseStorage implements IStorage {
   async createTemplate(template: InsertTemplate): Promise<Template> {
     const [newTemplate] = await db.insert(templates).values(template).returning();
     return newTemplate;
+  }
+
+  // Knowledge Base operations
+  async getKnowledgeBases(agentId: string): Promise<KnowledgeBase[]> {
+    return await db.select().from(knowledgeBases).where(eq(knowledgeBases.agentId, agentId)).orderBy(desc(knowledgeBases.updatedAt));
+  }
+
+  async getKnowledgeBase(id: string): Promise<KnowledgeBase | undefined> {
+    const [knowledgeBase] = await db.select().from(knowledgeBases).where(eq(knowledgeBases.id, id));
+    return knowledgeBase;
+  }
+
+  async createKnowledgeBase(knowledgeBase: InsertKnowledgeBase): Promise<KnowledgeBase> {
+    const [newKnowledgeBase] = await db.insert(knowledgeBases).values(knowledgeBase).returning();
+    return newKnowledgeBase;
+  }
+
+  async updateKnowledgeBase(id: string, updates: Partial<InsertKnowledgeBase>): Promise<KnowledgeBase> {
+    const [updatedKnowledgeBase] = await db
+      .update(knowledgeBases)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(knowledgeBases.id, id))
+      .returning();
+    return updatedKnowledgeBase;
+  }
+
+  async deleteKnowledgeBase(id: string): Promise<void> {
+    await db.delete(knowledgeBases).where(eq(knowledgeBases.id, id));
+  }
+
+  // Knowledge Item operations
+  async getKnowledgeItems(knowledgeBaseId: string): Promise<KnowledgeItem[]> {
+    return await db.select().from(knowledgeItems).where(eq(knowledgeItems.knowledgeBaseId, knowledgeBaseId)).orderBy(desc(knowledgeItems.createdAt));
+  }
+
+  async getKnowledgeItem(id: string): Promise<KnowledgeItem | undefined> {
+    const [knowledgeItem] = await db.select().from(knowledgeItems).where(eq(knowledgeItems.id, id));
+    return knowledgeItem;
+  }
+
+  async createKnowledgeItem(knowledgeItem: InsertKnowledgeItem): Promise<KnowledgeItem> {
+    const [newKnowledgeItem] = await db.insert(knowledgeItems).values(knowledgeItem).returning();
+    return newKnowledgeItem;
+  }
+
+  async updateKnowledgeItem(id: string, updates: Partial<InsertKnowledgeItem>): Promise<KnowledgeItem> {
+    const [updatedKnowledgeItem] = await db
+      .update(knowledgeItems)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(knowledgeItems.id, id))
+      .returning();
+    return updatedKnowledgeItem;
+  }
+
+  async deleteKnowledgeItem(id: string): Promise<void> {
+    await db.delete(knowledgeItems).where(eq(knowledgeItems.id, id));
+  }
+
+  // Embedding operations
+  async getEmbeddings(knowledgeItemId: string): Promise<Embedding[]> {
+    return await db.select().from(embeddings).where(eq(embeddings.knowledgeItemId, knowledgeItemId));
+  }
+
+  async createEmbedding(embedding: InsertEmbedding): Promise<Embedding> {
+    const [newEmbedding] = await db.insert(embeddings).values(embedding).returning();
+    return newEmbedding;
+  }
+
+  async searchEmbeddings(queryEmbedding: number[], limit: number = 10, knowledgeBaseId?: string): Promise<Array<Embedding & { similarity: number }>> {
+    // This is a basic implementation - in production you'd use vector similarity search
+    // For now, we'll return embeddings with a mock similarity score
+    let query = db.select().from(embeddings);
+    
+    if (knowledgeBaseId) {
+      // Join with knowledgeItems to filter by knowledgeBaseId
+      query = db.select({
+        id: embeddings.id,
+        knowledgeItemId: embeddings.knowledgeItemId,
+        chunkIndex: embeddings.chunkIndex,
+        chunkText: embeddings.chunkText,
+        vector: embeddings.vector,
+        metadata: embeddings.metadata,
+        createdAt: embeddings.createdAt,
+      }).from(embeddings)
+        .innerJoin(knowledgeItems, eq(embeddings.knowledgeItemId, knowledgeItems.id))
+        .where(eq(knowledgeItems.knowledgeBaseId, knowledgeBaseId));
+    }
+    
+    const results = await query.limit(limit);
+    
+    // Add mock similarity scores - in production this would be calculated using vector similarity
+    return results.map((embedding, index) => ({
+      ...embedding,
+      similarity: Math.max(0.5, 1 - (index * 0.1)) // Mock decreasing similarity
+    }));
+  }
+
+  // Data Source operations
+  async getDataSources(projectId: string): Promise<DataSource[]> {
+    return await db.select().from(dataSources).where(eq(dataSources.projectId, projectId)).orderBy(desc(dataSources.updatedAt));
+  }
+
+  async getDataSource(id: string): Promise<DataSource | undefined> {
+    const [dataSource] = await db.select().from(dataSources).where(eq(dataSources.id, id));
+    return dataSource;
+  }
+
+  async createDataSource(dataSource: InsertDataSource): Promise<DataSource> {
+    const [newDataSource] = await db.insert(dataSources).values(dataSource).returning();
+    return newDataSource;
+  }
+
+  async updateDataSource(id: string, updates: Partial<InsertDataSource>): Promise<DataSource> {
+    const [updatedDataSource] = await db
+      .update(dataSources)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(dataSources.id, id))
+      .returning();
+    return updatedDataSource;
+  }
+
+  async deleteDataSource(id: string): Promise<void> {
+    await db.delete(dataSources).where(eq(dataSources.id, id));
+  }
+
+  // Data Connection operations
+  async getDataConnections(agentId: string): Promise<DataConnection[]> {
+    return await db.select().from(dataConnections).where(eq(dataConnections.agentId, agentId)).orderBy(desc(dataConnections.createdAt));
+  }
+
+  async getDataConnection(id: string): Promise<DataConnection | undefined> {
+    const [dataConnection] = await db.select().from(dataConnections).where(eq(dataConnections.id, id));
+    return dataConnection;
+  }
+
+  async createDataConnection(dataConnection: InsertDataConnection): Promise<DataConnection> {
+    const [newDataConnection] = await db.insert(dataConnections).values(dataConnection).returning();
+    return newDataConnection;
+  }
+
+  async updateDataConnection(id: string, updates: Partial<InsertDataConnection>): Promise<DataConnection> {
+    const [updatedDataConnection] = await db
+      .update(dataConnections)
+      .set(updates)
+      .where(eq(dataConnections.id, id))
+      .returning();
+    return updatedDataConnection;
+  }
+
+  async deleteDataConnection(id: string): Promise<void> {
+    await db.delete(dataConnections).where(eq(dataConnections.id, id));
+  }
+
+  // Integration operations
+  async getIntegrations(agentId: string): Promise<AgentIntegration[]> {
+    return await db.select().from(agentIntegrations).where(eq(agentIntegrations.agentId, agentId)).orderBy(desc(agentIntegrations.updatedAt));
+  }
+
+  async getIntegration(id: string): Promise<AgentIntegration | undefined> {
+    const [integration] = await db.select().from(agentIntegrations).where(eq(agentIntegrations.id, id));
+    return integration;
+  }
+
+  async createIntegration(integration: InsertAgentIntegration): Promise<AgentIntegration> {
+    const [newIntegration] = await db.insert(agentIntegrations).values(integration).returning();
+    return newIntegration;
+  }
+
+  async updateIntegration(id: string, updates: Partial<InsertAgentIntegration>): Promise<AgentIntegration> {
+    const [updatedIntegration] = await db
+      .update(agentIntegrations)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(agentIntegrations.id, id))
+      .returning();
+    return updatedIntegration;
+  }
+
+  async deleteIntegration(id: string): Promise<void> {
+    await db.delete(agentIntegrations).where(eq(agentIntegrations.id, id));
+  }
+
+  // Trigger operations
+  async getTriggers(agentId: string): Promise<AutonomousTrigger[]> {
+    return await db.select().from(autonomousTriggers).where(eq(autonomousTriggers.agentId, agentId)).orderBy(desc(autonomousTriggers.updatedAt));
+  }
+
+  async getTrigger(id: string): Promise<AutonomousTrigger | undefined> {
+    const [trigger] = await db.select().from(autonomousTriggers).where(eq(autonomousTriggers.id, id));
+    return trigger;
+  }
+
+  async createTrigger(trigger: InsertAutonomousTrigger): Promise<AutonomousTrigger> {
+    const [newTrigger] = await db.insert(autonomousTriggers).values(trigger).returning();
+    return newTrigger;
+  }
+
+  async updateTrigger(id: string, updates: Partial<InsertAutonomousTrigger>): Promise<AutonomousTrigger> {
+    const [updatedTrigger] = await db
+      .update(autonomousTriggers)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(autonomousTriggers.id, id))
+      .returning();
+    return updatedTrigger;
+  }
+
+  async deleteTrigger(id: string): Promise<void> {
+    await db.delete(autonomousTriggers).where(eq(autonomousTriggers.id, id));
+  }
+
+  // Trigger Event operations
+  async getTriggerEvents(triggerId: string): Promise<TriggerEvent[]> {
+    return await db.select().from(triggerEvents).where(eq(triggerEvents.triggerId, triggerId)).orderBy(desc(triggerEvents.createdAt));
+  }
+
+  async createTriggerEvent(event: InsertTriggerEvent): Promise<TriggerEvent> {
+    const [newEvent] = await db.insert(triggerEvents).values(event).returning();
+    return newEvent;
+  }
+
+  async updateTriggerEvent(id: string, updates: Partial<InsertTriggerEvent>): Promise<TriggerEvent> {
+    const [updatedEvent] = await db
+      .update(triggerEvents)
+      .set(updates)
+      .where(eq(triggerEvents.id, id))
+      .returning();
+    return updatedEvent;
+  }
+
+  // UI Component operations
+  async getUiComponents(agentUiId: string): Promise<UiComponent[]> {
+    return await db.select().from(uiComponents).where(eq(uiComponents.agentUiId, agentUiId)).orderBy(desc(uiComponents.createdAt));
+  }
+
+  async getUiComponent(id: string): Promise<UiComponent | undefined> {
+    const [component] = await db.select().from(uiComponents).where(eq(uiComponents.id, id));
+    return component;
+  }
+
+  async createUiComponent(component: InsertUiComponent): Promise<UiComponent> {
+    const [newComponent] = await db.insert(uiComponents).values(component).returning();
+    return newComponent;
+  }
+
+  async updateUiComponent(id: string, updates: Partial<InsertUiComponent>): Promise<UiComponent> {
+    const [updatedComponent] = await db
+      .update(uiComponents)
+      .set(updates)
+      .where(eq(uiComponents.id, id))
+      .returning();
+    return updatedComponent;
+  }
+
+  async deleteUiComponent(id: string): Promise<void> {
+    await db.delete(uiComponents).where(eq(uiComponents.id, id));
+  }
+
+  // Agent UI operations
+  async getAgentUis(agentId: string): Promise<AgentUi[]> {
+    return await db.select().from(agentUis).where(eq(agentUis.agentId, agentId)).orderBy(desc(agentUis.updatedAt));
+  }
+
+  async getAgentUi(id: string): Promise<AgentUi | undefined> {
+    const [agentUi] = await db.select().from(agentUis).where(eq(agentUis.id, id));
+    return agentUi;
+  }
+
+  async createAgentUi(agentUi: InsertAgentUi): Promise<AgentUi> {
+    const [newAgentUi] = await db.insert(agentUis).values(agentUi).returning();
+    return newAgentUi;
+  }
+
+  async updateAgentUi(id: string, updates: Partial<InsertAgentUi>): Promise<AgentUi> {
+    const [updatedAgentUi] = await db
+      .update(agentUis)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(agentUis.id, id))
+      .returning();
+    return updatedAgentUi;
+  }
+
+  async deleteAgentUi(id: string): Promise<void> {
+    await db.delete(agentUis).where(eq(agentUis.id, id));
   }
 }
 
