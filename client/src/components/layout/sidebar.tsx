@@ -1,8 +1,14 @@
 import { useLocation, Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 
-export default function Sidebar() {
+interface SidebarProps {
+  onClose?: () => void;
+}
+
+export default function Sidebar({ onClose }: SidebarProps) {
   const [location] = useLocation();
+  const isMobile = useIsMobile();
 
   const navItems = [
     { path: "/", label: "Dashboard", icon: "fas fa-home" },
@@ -21,7 +27,23 @@ export default function Sidebar() {
   ];
 
   return (
-    <div className="w-80 bg-card border-r border-border flex flex-col">
+    <div className="w-80 bg-card border-r border-border flex flex-col h-full">
+      {/* Mobile close button */}
+      {isMobile && onClose && (
+        <div className="p-4 border-b border-border lg:hidden">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={onClose}
+            className="mb-2"
+            data-testid="button-close-sidebar"
+          >
+            <i className="fas fa-times mr-2"></i>
+            Close
+          </Button>
+        </div>
+      )}
+      
       {/* Logo & Brand */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center gap-3">
@@ -53,6 +75,7 @@ export default function Sidebar() {
                   : "hover:bg-muted text-foreground"
               }`}
               data-testid={`link-${item.label.toLowerCase().replace(" ", "-")}`}
+              onClick={() => isMobile && onClose && onClose()}
             >
               <Link href={item.path}>
                 <i className={`${item.icon} w-4`}></i>
@@ -82,6 +105,7 @@ export default function Sidebar() {
                     : "hover:bg-muted text-foreground"
                 }`}
                 data-testid={`link-${item.label.toLowerCase()}`}
+                onClick={() => isMobile && onClose && onClose()}
               >
                 <Link href={item.path}>
                   <i className={`${item.icon} w-4`}></i>

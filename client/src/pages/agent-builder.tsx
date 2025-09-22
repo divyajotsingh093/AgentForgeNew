@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { insertAgentSchema, type InsertAgent } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import Sidebar from "@/components/layout/sidebar";
@@ -49,8 +50,10 @@ export default function AgentBuilder() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
+  const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("objectives");
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(isMobile);
 
   // Initialize form with default values
   const form = useForm<AgentFormData>({
@@ -234,47 +237,63 @@ export default function AgentBuilder() {
   return (
     <FormProvider {...form}>
       <div className="flex h-screen">
-        <Sidebar />
-        <div className="flex-1 flex flex-col">
-          <Header />
+        {/* Mobile overlay when sidebar is open */}
+        {isMobile && !sidebarCollapsed && (
+          <div 
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            onClick={() => setSidebarCollapsed(true)}
+          />
+        )}
+        
+        {/* Sidebar with responsive behavior */}
+        <div className={`${sidebarCollapsed && isMobile ? 'hidden' : 'block'} ${isMobile ? 'fixed inset-y-0 left-0 z-50 w-80' : 'relative'}`}>
+          <Sidebar onClose={() => setSidebarCollapsed(true)} />
+        </div>
+        
+        <div className="flex-1 flex flex-col min-w-0">
+          <Header onMenuToggle={() => setSidebarCollapsed(!sidebarCollapsed)} showMenuButton={isMobile} />
         
         {/* Agent Builder Content */}
         <main className="flex-1 overflow-auto">
-          <div className="max-w-7xl mx-auto p-6">
+          <div className="max-w-7xl mx-auto p-4 lg:p-6">
             {/* Header Section */}
             <div className="mb-6">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-4 gap-4">
                 <div>
-                  <h1 className="text-3xl font-bold" data-testid="agent-builder-title">
+                  <h1 className="text-2xl lg:text-3xl font-bold" data-testid="agent-builder-title">
                     {id ? "Edit Agent" : "Create New Agent"}
                   </h1>
-                  <p className="text-muted-foreground mt-1">
+                  <p className="text-muted-foreground mt-1 text-sm lg:text-base">
                     Build a comprehensive AI agent with advanced capabilities
                   </p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 lg:gap-3">
                   <Button 
                     variant="outline" 
                     onClick={handlePreviewAgent}
+                    size={isMobile ? "sm" : "default"}
                     data-testid="button-preview-agent"
                   >
-                    <i className="fas fa-eye mr-2"></i>
-                    Preview
+                    <i className="fas fa-eye mr-1 lg:mr-2"></i>
+                    <span className="hidden sm:inline">Preview</span>
                   </Button>
                   <Button 
                     onClick={handleSaveAgent}
+                    size={isMobile ? "sm" : "default"}
                     disabled={createAgentMutation.isPending || updateAgentMutation.isPending}
                     data-testid="button-save-agent"
                   >
                     {(createAgentMutation.isPending || updateAgentMutation.isPending) ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Saving...
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-1 lg:mr-2"></div>
+                        <span className="hidden sm:inline">Saving...</span>
+                        <span className="sm:hidden">...</span>
                       </>
                     ) : (
                       <>
-                        <i className="fas fa-save mr-2"></i>
-                        Save Agent
+                        <i className="fas fa-save mr-1 lg:mr-2"></i>
+                        <span className="hidden sm:inline">Save Agent</span>
+                        <span className="sm:hidden">Save</span>
                       </>
                     )}
                   </Button>
@@ -290,13 +309,14 @@ export default function AgentBuilder() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
                     <div>
-                      <Label htmlFor="agent-name">Agent Name *</Label>
+                      <Label htmlFor="agent-name" className="text-sm font-medium">Agent Name *</Label>
                       <Input
                         {...form.register("name")}
                         id="agent-name"
                         placeholder="My Intelligent Agent"
+                        className="mt-1.5"
                         data-testid="input-agent-name"
                       />
                       {form.formState.errors.name && (
@@ -306,11 +326,12 @@ export default function AgentBuilder() {
                       )}
                     </div>
                     <div>
-                      <Label htmlFor="agent-description">Description</Label>
+                      <Label htmlFor="agent-description" className="text-sm font-medium">Description</Label>
                       <Input
                         {...form.register("description")}
                         id="agent-description"
                         placeholder="Brief description of what this agent does"
+                        className="mt-1.5"
                         data-testid="input-agent-description"
                       />
                     </div>
@@ -319,12 +340,12 @@ export default function AgentBuilder() {
                   {/* Capabilities Overview */}
                   <div className="mt-6">
                     <Label className="text-sm font-medium">Enabled Capabilities</Label>
-                    <div className="flex flex-wrap gap-2 mt-2">
+                    <div className="flex flex-wrap gap-1.5 lg:gap-2 mt-2">
                       {Object.entries(form.watch("capabilities") || {}).map(([key, enabled]) => (
                         <Badge 
                           key={key}
                           variant={enabled ? "default" : "secondary"}
-                          className={enabled ? "bg-primary" : ""}
+                          className={`${enabled ? "bg-primary" : ""} text-xs lg:text-sm`}
                           data-testid={`badge-capability-${key}`}
                         >
                           {key.charAt(0).toUpperCase() + key.slice(1)}
@@ -337,54 +358,76 @@ export default function AgentBuilder() {
             </div>
 
             {/* Multi-Tab Interface */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 lg:space-y-6">
               {/* Tab Navigation */}
               <div className="border-b border-border">
-                <TabsList className="h-auto p-0 bg-transparent">
-                  <div className="flex space-x-8 overflow-x-auto">
-                    {tabs.map((tab) => (
-                      <TabsTrigger 
-                        key={tab.id}
-                        value={tab.id}
-                        className="flex flex-col items-center gap-2 p-4 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
-                        data-testid={`tab-${tab.id}`}
+                <TabsList className="h-auto p-0 bg-transparent w-full">
+                  {isMobile ? (
+                    /* Mobile: Dropdown-style navigation */
+                    <div className="w-full p-2">
+                      <select 
+                        value={activeTab} 
+                        onChange={(e) => setActiveTab(e.target.value)}
+                        className="w-full p-3 border border-border rounded-lg bg-card text-foreground text-sm font-medium"
+                        data-testid="mobile-tab-select"
                       >
-                        <div className="flex items-center gap-2">
-                          <i className={`${tab.icon} text-lg`}></i>
-                          <span className="font-medium">{tab.label}</span>
-                        </div>
-                        <span className="text-xs text-muted-foreground max-w-32 text-center">
-                          {tab.description}
-                        </span>
-                      </TabsTrigger>
-                    ))}
-                  </div>
+                        {tabs.map((tab) => (
+                          <option key={tab.id} value={tab.id}>
+                            {tab.label}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-xs text-muted-foreground mt-2 px-1">
+                        {tabs.find(tab => tab.id === activeTab)?.description}
+                      </p>
+                    </div>
+                  ) : (
+                    /* Desktop: Horizontal tabs */
+                    <div className="flex space-x-6 lg:space-x-8 overflow-x-auto pb-0">
+                      {tabs.map((tab) => (
+                        <TabsTrigger 
+                          key={tab.id}
+                          value={tab.id}
+                          className="flex flex-col items-center gap-2 p-3 lg:p-4 data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none whitespace-nowrap min-w-0"
+                          data-testid={`tab-${tab.id}`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <i className={`${tab.icon} text-base lg:text-lg`}></i>
+                            <span className="font-medium text-sm lg:text-base">{tab.label}</span>
+                          </div>
+                          <span className="text-xs text-muted-foreground max-w-28 lg:max-w-32 text-center line-clamp-2">
+                            {tab.description}
+                          </span>
+                        </TabsTrigger>
+                      ))}
+                    </div>
+                  )}
                 </TabsList>
               </div>
 
               {/* Tab Content */}
-              <div className="min-h-[600px]">
-                <TabsContent value="objectives" className="space-y-6">
+              <div className="min-h-[500px] lg:min-h-[600px]">
+                <TabsContent value="objectives" className="space-y-4 lg:space-y-6 mt-0">
                   <ObjectivesTab />
                 </TabsContent>
 
-                <TabsContent value="knowledge" className="space-y-6">
+                <TabsContent value="knowledge" className="space-y-4 lg:space-y-6 mt-0">
                   <KnowledgeTab />
                 </TabsContent>
 
-                <TabsContent value="tools" className="space-y-6">
+                <TabsContent value="tools" className="space-y-4 lg:space-y-6 mt-0">
                   <ToolsTab />
                 </TabsContent>
 
-                <TabsContent value="data-fabric" className="space-y-6">
+                <TabsContent value="data-fabric" className="space-y-4 lg:space-y-6 mt-0">
                   <DataFabricTab />
                 </TabsContent>
 
-                <TabsContent value="frontend" className="space-y-6">
+                <TabsContent value="frontend" className="space-y-4 lg:space-y-6 mt-0">
                   <FrontendTab />
                 </TabsContent>
 
-                <TabsContent value="triggers" className="space-y-6">
+                <TabsContent value="triggers" className="space-y-4 lg:space-y-6 mt-0">
                   <TriggersTab />
                 </TabsContent>
               </div>

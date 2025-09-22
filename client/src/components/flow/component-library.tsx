@@ -5,7 +5,11 @@ import { useState } from "react";
 import TemplateInstantiationModal from "@/components/modals/template-instantiation-modal";
 import type { Template } from "@shared/schema";
 
-export default function ComponentLibrary() {
+interface ComponentLibraryProps {
+  onClose?: () => void;
+}
+
+export default function ComponentLibrary({ onClose }: ComponentLibraryProps) {
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [showInstantiationModal, setShowInstantiationModal] = useState(false);
 
@@ -70,11 +74,27 @@ export default function ComponentLibrary() {
   // Templates are now fetched from API above
 
   return (
-    <div className="w-80 bg-card border-r border-border flex flex-col">
+    <div className="w-80 bg-card border-r border-border flex flex-col h-full">
       {/* Panel Header */}
       <div className="p-4 border-b border-border">
-        <h3 className="font-semibold text-base">Component Library</h3>
-        <p className="text-sm text-muted-foreground mt-1">Drag to add to your flow</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold text-base">Component Library</h3>
+            <p className="text-sm text-muted-foreground mt-1">Drag to add to your flow</p>
+          </div>
+          {onClose && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={onClose}
+              className="lg:hidden"
+              data-testid="button-close-components"
+              aria-label="Close"
+            >
+              <i className="fas fa-times"></i>
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Panel Content */}

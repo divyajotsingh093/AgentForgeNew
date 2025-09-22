@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface RunConsoleProps {
   activeRun: string | null;
+  onClose?: () => void;
 }
 
 interface LogEntry {
@@ -19,7 +20,7 @@ interface LogEntry {
   type: 'session' | 'agent' | 'tool' | 'note';
 }
 
-export default function RunConsole({ activeRun }: RunConsoleProps) {
+export default function RunConsole({ activeRun, onClose }: RunConsoleProps) {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [runStatus, setRunStatus] = useState<'idle' | 'running' | 'success' | 'error'>('idle');
   const [duration, setDuration] = useState('0:00');
@@ -126,7 +127,23 @@ export default function RunConsole({ activeRun }: RunConsoleProps) {
   };
 
   return (
-    <div className="w-96 bg-card border-l border-border flex flex-col">
+    <div className="w-96 bg-card border-l border-border flex flex-col h-full">
+      {/* Mobile close button */}
+      {onClose && (
+        <div className="p-2 border-b border-border lg:hidden">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={onClose}
+            className="w-full"
+            data-testid="button-close-console"
+          >
+            <i className="fas fa-times mr-2"></i>
+            Close Console
+          </Button>
+        </div>
+      )}
+      
       {/* Panel Tabs */}
       <Tabs defaultValue="console" className="flex-1 flex flex-col">
         <TabsList className="grid w-full grid-cols-3">

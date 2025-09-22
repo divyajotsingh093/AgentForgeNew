@@ -4,6 +4,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Button } from "@/components/ui/button";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 import ComponentLibrary from "@/components/flow/component-library";
@@ -15,8 +17,12 @@ export default function FlowBuilder() {
   const { id } = useParams();
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
+  const isMobile = useIsMobile();
   const [showTextToAgent, setShowTextToAgent] = useState(false);
   const [activeRun, setActiveRun] = useState<string | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(isMobile);
+  const [leftPanelOpen, setLeftPanelOpen] = useState(!isMobile);
+  const [rightPanelOpen, setRightPanelOpen] = useState(!isMobile);
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -134,8 +140,20 @@ export default function FlowBuilder() {
 
   return (
     <div className="flex h-screen">
-      <Sidebar />
-      <div className="flex-1 flex flex-col">
+      {/* Mobile overlay when sidebar is open */}
+      {isMobile && !sidebarCollapsed && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setSidebarCollapsed(true)}
+        />
+      )}
+      
+      {/* Sidebar with responsive behavior */}
+      <div className={`${sidebarCollapsed && isMobile ? 'hidden' : 'block'} ${isMobile ? 'fixed inset-y-0 left-0 z-50 w-80' : 'relative'}`}>
+        <Sidebar onClose={() => setSidebarCollapsed(true)} />
+      </div>
+      
+      <div className="flex-1 flex flex-col min-w-0">
         <Header 
           onTextToAgent={() => setShowTextToAgent(true)}
           onRunFlow={() => {
@@ -146,13 +164,74 @@ export default function FlowBuilder() {
               description: "Your agent workflow is now running",
             });
           }}
+          onMenuToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+          showMenuButton={isMobile}
         />
         
+        {/* Mobile panel toggle buttons */}
+        {isMobile && (
+          <div className="flex items-center justify-between p-2 border-b border-border bg-card">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setLeftPanelOpen(!leftPanelOpen)}
+              data-testid="button-toggle-components"
+            >
+              <i className="fas fa-cubes mr-1"></i>
+              Components
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setRightPanelOpen(!rightPanelOpen)}
+              data-testid="button-toggle-console"
+            >
+              <i className="fas fa-terminal mr-1"></i>
+              Console
+            </Button>
+          </div>
+        )}
+        
         {/* Three-panel layout */}
-        <div className="flex-1 flex">
-          <ComponentLibrary />
-          <FlowCanvas flow={displayFlow} steps={displaySteps} />
-          <RunConsole activeRun={activeRun} />
+        <div className="flex-1 flex relative">
+          {/* Left Panel - Component Library */}
+          {isMobile ? (
+            leftPanelOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 bg-black/50 z-30"
+                  onClick={() => setLeftPanelOpen(false)}
+                />
+                <div className="fixed left-0 top-0 bottom-0 z-40 w-80">
+                  <ComponentLibrary onClose={() => setLeftPanelOpen(false)} />
+                </div>
+              </>
+            )
+          ) : (
+            leftPanelOpen && <ComponentLibrary />
+          )}
+          
+          {/* Center Panel - Flow Canvas */}
+          <div className={`flex-1 min-w-0 ${isMobile ? '' : leftPanelOpen && rightPanelOpen ? 'max-w-[calc(100%-704px)]' : leftPanelOpen ? 'max-w-[calc(100%-320px)]' : rightPanelOpen ? 'max-w-[calc(100%-384px)]' : ''}`}>
+            <FlowCanvas flow={displayFlow} steps={displaySteps} />
+          </div>
+          
+          {/* Right Panel - Run Console */}
+          {isMobile ? (
+            rightPanelOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 bg-black/50 z-30"
+                  onClick={() => setRightPanelOpen(false)}
+                />
+                <div className="fixed right-0 top-0 bottom-0 z-40 w-96">
+                  <RunConsole activeRun={activeRun} onClose={() => setRightPanelOpen(false)} />
+                </div>
+              </>
+            )
+          ) : (
+            rightPanelOpen && <RunConsole activeRun={activeRun} />
+          )}
         </div>
       </div>
 
