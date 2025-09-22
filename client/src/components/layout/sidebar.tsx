@@ -38,44 +38,54 @@ export default function Sidebar() {
           Workspace
         </div>
         
-        {navItems.map((item) => (
-          <Link key={item.path} href={item.path}>
+        {navItems.map((item) => {
+          const isActive = location === item.path || location.startsWith(item.path + "/");
+          return (
             <Button
-              variant={location === item.path ? "default" : "ghost"}
+              key={item.path}
+              asChild
+              variant={isActive ? "default" : "ghost"}
               className={`w-full justify-start gap-3 ${
-                location === item.path 
+                isActive
                   ? "bg-primary text-primary-foreground" 
                   : "hover:bg-muted text-foreground"
               }`}
-              data-testid={`nav-${item.label.toLowerCase().replace(" ", "-")}`}
+              data-testid={`link-${item.label.toLowerCase().replace(" ", "-")}`}
             >
-              <i className={`${item.icon} w-4`}></i>
-              <span>{item.label}</span>
+              <Link href={item.path}>
+                <i className={`${item.icon} w-4`}></i>
+                <span>{item.label}</span>
+              </Link>
             </Button>
-          </Link>
-        ))}
+          );
+        })}
 
         <div className="pt-4">
           <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">
             Platform
           </div>
           
-          {platformItems.map((item) => (
-            <Link key={item.path} href={item.path}>
+          {platformItems.map((item) => {
+            const isActive = location === item.path || location.startsWith(item.path + "/");
+            return (
               <Button
-                variant={location === item.path ? "default" : "ghost"}
+                key={item.path}
+                asChild
+                variant={isActive ? "default" : "ghost"}
                 className={`w-full justify-start gap-3 ${
-                  location === item.path 
+                  isActive
                     ? "bg-primary text-primary-foreground" 
                     : "hover:bg-muted text-foreground"
                 }`}
-                data-testid={`nav-${item.label.toLowerCase()}`}
+                data-testid={`link-${item.label.toLowerCase()}`}
               >
-                <i className={`${item.icon} w-4`}></i>
-                <span>{item.label}</span>
+                <Link href={item.path}>
+                  <i className={`${item.icon} w-4`}></i>
+                  <span>{item.label}</span>
+                </Link>
               </Button>
-            </Link>
-          ))}
+            );
+          })}
         </div>
       </nav>
 
