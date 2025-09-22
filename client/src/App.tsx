@@ -9,6 +9,10 @@ import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import FlowBuilder from "@/pages/flow-builder";
 import AgentBuilder from "@/pages/agent-builder";
+import Agents from "@/pages/agents";
+import Tools from "@/pages/tools";
+import Runs from "@/pages/runs";
+import Templates from "@/pages/templates";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -30,6 +34,10 @@ function Router() {
           <Route path="/" component={Dashboard} />
           <Route path="/flow-builder/:id?" component={FlowBuilder} />
           <Route path="/agent-builder/:id?" component={AgentBuilder} />
+          <Route path="/agents" component={Agents} />
+          <Route path="/tools" component={Tools} />
+          <Route path="/runs" component={Runs} />
+          <Route path="/templates" component={Templates} />
         </>
       )}
       <Route component={NotFound} />
