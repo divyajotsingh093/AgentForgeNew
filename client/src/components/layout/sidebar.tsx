@@ -1,4 +1,4 @@
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 
 export default function Sidebar() {
@@ -39,19 +39,20 @@ export default function Sidebar() {
         </div>
         
         {navItems.map((item) => (
-          <Button
-            key={item.path}
-            variant={location === item.path ? "default" : "ghost"}
-            className={`w-full justify-start gap-3 ${
-              location === item.path 
-                ? "bg-primary text-primary-foreground" 
-                : "hover:bg-muted text-foreground"
-            }`}
-            data-testid={`nav-${item.label.toLowerCase().replace(" ", "-")}`}
-          >
-            <i className={`${item.icon} w-4`}></i>
-            <span>{item.label}</span>
-          </Button>
+          <Link key={item.path} href={item.path}>
+            <Button
+              variant={location === item.path ? "default" : "ghost"}
+              className={`w-full justify-start gap-3 ${
+                location === item.path 
+                  ? "bg-primary text-primary-foreground" 
+                  : "hover:bg-muted text-foreground"
+              }`}
+              data-testid={`nav-${item.label.toLowerCase().replace(" ", "-")}`}
+            >
+              <i className={`${item.icon} w-4`}></i>
+              <span>{item.label}</span>
+            </Button>
+          </Link>
         ))}
 
         <div className="pt-4">
@@ -60,15 +61,20 @@ export default function Sidebar() {
           </div>
           
           {platformItems.map((item) => (
-            <Button
-              key={item.path}
-              variant="ghost"
-              className="w-full justify-start gap-3 hover:bg-muted text-foreground"
-              data-testid={`nav-${item.label.toLowerCase()}`}
-            >
-              <i className={`${item.icon} w-4`}></i>
-              <span>{item.label}</span>
-            </Button>
+            <Link key={item.path} href={item.path}>
+              <Button
+                variant={location === item.path ? "default" : "ghost"}
+                className={`w-full justify-start gap-3 ${
+                  location === item.path 
+                    ? "bg-primary text-primary-foreground" 
+                    : "hover:bg-muted text-foreground"
+                }`}
+                data-testid={`nav-${item.label.toLowerCase()}`}
+              >
+                <i className={`${item.icon} w-4`}></i>
+                <span>{item.label}</span>
+              </Button>
+            </Link>
           ))}
         </div>
       </nav>
