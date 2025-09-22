@@ -39,7 +39,9 @@ export default function Sidebar() {
         </div>
         
         {navItems.map((item) => {
-          const isActive = location === item.path || location.startsWith(item.path + "/");
+          const isActive = item.path === "/" 
+            ? location === "/" 
+            : location === item.path || location.startsWith(item.path + "/");
           return (
             <Button
               key={item.path}
@@ -66,7 +68,9 @@ export default function Sidebar() {
           </div>
           
           {platformItems.map((item) => {
-            const isActive = location === item.path || location.startsWith(item.path + "/");
+            const isActive = item.path === "/" 
+              ? location === "/" 
+              : location === item.path || location.startsWith(item.path + "/");
             return (
               <Button
                 key={item.path}
