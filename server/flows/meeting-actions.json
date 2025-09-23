@@ -1,0 +1,113 @@
+{
+  "id": "meeting-actions-flow",
+  "name": "Meeting → Actions",
+  "description": "Transform meeting recordings into actionable tasks",
+  "inputs": {
+    "transcript": "string",
+    "audioUrl": "string",
+    "export": "string"
+  },
+  "outputs": {
+    "report": "string",
+    "exportResult": "string"
+  },
+  "steps": [
+    {
+      "id": "transcriber-step",
+      "idx": 0,
+      "kind": "agent",
+      "name": "transcriber",
+      "refId": "transcriber-agent",
+      "in": {
+        "transcript": "$.transcript",
+        "audioUrl": "$.audioUrl"
+      },
+      "out": {
+        "transcript": "$.transcript"
+      },
+      "policy": {
+        "timeoutMs": 30000,
+        "maxRetries": 2
+      }
+    },
+    {
+      "id": "summarizer-step",
+      "idx": 1,
+      "kind": "agent",
+      "name": "summarizer",
+      "refId": "summarizer-agent",
+      "in": {
+        "transcript": "$.transcript"
+      },
+      "out": {
+        "summary": "$.summary",
+        "decisions": "$.decisions",
+        "openQuestions": "$.openQuestions"
+      },
+      "policy": {
+        "timeoutMs": 30000,
+        "maxRetries": 2
+      }
+    },
+    {
+      "id": "action-extractor-step",
+      "idx": 2,
+      "kind": "agent",
+      "name": "actionExtractor",
+      "refId": "action-extractor-agent",
+      "in": {
+        "transcript": "$.transcript",
+        "summary": "$.summary"
+      },
+      "out": {
+        "actions": "$.actions"
+      },
+      "policy": {
+        "timeoutMs": 30000,
+        "maxRetries": 2
+      }
+    },
+    {
+      "id": "notion-export-step",
+      "idx": 3,
+      "kind": "tool",
+      "name": "notion.export",
+      "refId": "notion-export-tool",
+      "condition": "$.export == 'notion'",
+      "args": {
+        "databaseId": "env.NOTION_DATABASE_ID"
+      },
+      "in": {
+        "tasks": "$.actions"
+      },
+      "policy": {
+        "timeoutMs": 15000,
+        "maxRetries": 1
+      }
+    },
+    {
+      "id": "publisher-step",
+      "idx": 4,
+      "kind": "agent",
+      "name": "publisher",
+      "refId": "publisher-agent",
+      "in": {
+        "summary": "$.summary",
+        "actions": "$.actions",
+        "export": "$.export"
+      },
+      "out": {
+        "report": "$.report",
+        "exportResult": "$.exportResult"
+      },
+      "policy": {
+        "timeoutMs": 30000,
+        "maxRetries": 2
+      }
+    }
+  ],
+  "policy": {
+    "timeoutMs": 300000,
+    "maxRetries": 1
+  }
+}

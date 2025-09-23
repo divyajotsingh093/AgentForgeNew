@@ -5,6 +5,7 @@ import multer from "multer";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./auth0";
 import { executionEngine } from "./executionEngine";
+import { langGraphEngine } from "./langGraphEngine";
 import { EmbeddingService } from "./embeddingService";
 import { 
   insertProjectSchema, insertAgentSchema, insertToolSchema, insertFlowSchema, insertRunSchema, insertStepSchema, insertSecretSchema,
@@ -900,6 +901,56 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
     } catch (error) {
       console.error("Error fetching logs:", error);
       res.status(500).json({ message: "Failed to fetch logs" });
+    }
+  });
+
+  // LangGraph execution routes
+  app.post('/api/langgraph/test/meeting-actions', async (req, res) => {
+    try {
+      console.log('🚀 Starting LangGraph test execution...');
+      
+      const result = await langGraphEngine.testMeetingActionsFlow();
+      
+      console.log('✅ LangGraph test execution completed:', result.status);
+      
+      res.json({
+        success: true,
+        message: "LangGraph test execution completed",
+        result
+      });
+    } catch (error) {
+      console.error("❌ LangGraph test execution failed:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "LangGraph test execution failed", 
+        error: (error as Error).message 
+      });
+    }
+  });
+
+  app.post('/api/langgraph/flows/:flowName/run', async (req, res) => {
+    try {
+      const { flowName } = req.params;
+      const { input = {}, sessionId = `session_${Date.now()}` } = req.body;
+      
+      console.log(`🚀 Starting LangGraph execution for flow: ${flowName}`);
+      
+      const result = await langGraphEngine.executeFlowByName(flowName, sessionId, input);
+      
+      console.log(`✅ LangGraph execution completed for ${flowName}:`, result.status);
+      
+      res.json({
+        success: true,
+        message: `LangGraph execution completed for ${flowName}`,
+        result
+      });
+    } catch (error) {
+      console.error(`❌ LangGraph execution failed for flow:`, error);
+      res.status(500).json({ 
+        success: false,
+        message: "LangGraph execution failed", 
+        error: (error as Error).message 
+      });
     }
   });
 

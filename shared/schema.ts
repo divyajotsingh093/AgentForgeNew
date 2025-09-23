@@ -257,6 +257,24 @@ export const triggerEvents = pgTable("trigger_events", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// LangGraph Execution Tables
+export const runCheckpoints = pgTable("run_checkpoints", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  runId: uuid("run_id").notNull().references(() => runs.id, { onDelete: 'cascade' }),
+  stepIdx: integer("step_idx").notNull(),
+  status: text("status").notNull(), // pending|running|success|error
+  contextJson: jsonb("context_json").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const memory = pgTable("memory", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: text("session_id").notNull(),
+  key: text("key").notNull(),
+  valueJson: jsonb("value_json").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Frontend Capabilities Tables
 export const agentUis = pgTable("agent_uis", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -473,6 +491,14 @@ export const formDefinitionsRelations = relations(formDefinitions, ({ one }) => 
   }),
 }));
 
+// LangGraph table relations
+export const runCheckpointsRelations = relations(runCheckpoints, ({ one }) => ({
+  run: one(runs, {
+    fields: [runCheckpoints.runId],
+    references: [runs.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -608,6 +634,17 @@ export const insertFormDefinitionSchema = createInsertSchema(formDefinitions).om
   updatedAt: true,
 });
 
+// LangGraph insert schemas
+export const insertRunCheckpointSchema = createInsertSchema(runCheckpoints).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertMemorySchema = createInsertSchema(memory).omit({
+  id: true,
+  updatedAt: true,
+});
+
 // Types
 export type UpsertUser = z.infer<typeof upsertUserSchema>;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -658,3 +695,9 @@ export type InsertUiComponent = z.infer<typeof insertUiComponentSchema>;
 export type UiComponent = typeof uiComponents.$inferSelect;
 export type InsertFormDefinition = z.infer<typeof insertFormDefinitionSchema>;
 export type FormDefinition = typeof formDefinitions.$inferSelect;
+
+// LangGraph types
+export type InsertRunCheckpoint = z.infer<typeof insertRunCheckpointSchema>;
+export type RunCheckpoint = typeof runCheckpoints.$inferSelect;
+export type InsertMemory = z.infer<typeof insertMemorySchema>;
+export type Memory = typeof memory.$inferSelect;
