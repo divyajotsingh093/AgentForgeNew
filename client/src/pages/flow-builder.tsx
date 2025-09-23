@@ -46,7 +46,7 @@ export default function FlowBuilder() {
     retry: false,
   });
 
-  const { data: steps, isLoading: stepsLoading } = useQuery<any[]>({
+  const { data: steps, isLoading: stepsLoading, refetch: refetchSteps } = useQuery<any[]>({
     queryKey: ["/api/flows", id, "steps"],
     enabled: !!id,
     retry: false,
@@ -217,7 +217,11 @@ export default function FlowBuilder() {
           
           {/* Center Panel - Flow Canvas */}
           <div className={`flex-1 min-w-0 ${isMobile ? '' : leftPanelOpen && rightPanelOpen ? 'max-w-[calc(100%-704px)]' : leftPanelOpen ? 'max-w-[calc(100%-320px)]' : rightPanelOpen ? 'max-w-[calc(100%-384px)]' : ''}`}>
-            <FlowCanvas flow={displayFlow} steps={displaySteps} />
+            <FlowCanvas 
+              flow={displayFlow} 
+              steps={displaySteps} 
+              onStepsChange={() => refetchSteps()}
+            />
           </div>
           
           {/* Right Panel - Run Console */}

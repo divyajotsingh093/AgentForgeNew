@@ -856,6 +856,40 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
     }
   });
 
+  app.post('/api/flows/:id/steps', isAuthenticated, async (req, res) => {
+    try {
+      const stepData = insertStepSchema.parse({ 
+        ...req.body, 
+        flowId: req.params.id 
+      });
+      const step = await storage.createStep(stepData);
+      res.json(step);
+    } catch (error) {
+      console.error("Error creating step:", error);
+      res.status(500).json({ message: "Failed to create step" });
+    }
+  });
+
+  app.put('/api/steps/:id', isAuthenticated, async (req, res) => {
+    try {
+      const step = await storage.updateStep(req.params.id, req.body);
+      res.json(step);
+    } catch (error) {
+      console.error("Error updating step:", error);
+      res.status(500).json({ message: "Failed to update step" });
+    }
+  });
+
+  app.delete('/api/steps/:id', isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteStep(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting step:", error);
+      res.status(500).json({ message: "Failed to delete step" });
+    }
+  });
+
   // Run routes
   app.post('/api/flows/:id/run', isAuthenticated, async (req, res) => {
     try {
