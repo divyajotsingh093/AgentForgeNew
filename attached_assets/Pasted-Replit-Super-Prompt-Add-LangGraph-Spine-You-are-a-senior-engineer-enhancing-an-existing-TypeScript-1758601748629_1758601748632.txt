@@ -1,0 +1,132 @@
+Replit Super Prompt — Add LangGraph Spine
+You are a senior engineer enhancing an existing TypeScript monorepo called AgentForgeNew.
+Goal: integrate **LangGraph (@langchain/langgraph)** as the execution spine for agent flows.
+
+## Context
+- Repo structure: client/, server/, shared/
+- Tech: TypeScript, Drizzle ORM (SQLite/Postgres), Vite frontend, Tailwind
+- We want LangGraph to orchestrate agents/tools as nodes with retries, context passing, and logging.
+- First demo flow: “Meeting → Actions” (transcriber → summariser → actionExtractor → publisher → notionExporter).
+
+## Tasks
+
+### 1. Dependencies
+- Add to package.json: 
+  - "@langchain/langgraph"
+  - "zod"
+  - "pino"
+  - "openai"
+  - "dotenv"
+  - "better-sqlite3" or "drizzle-orm" (use repo’s Drizzle config)
+- Add scripts:
+  - "dev": "tsx watch server/src/index.ts"
+  - "start": "node dist/index.js"
+  - "build": "tsc"
+
+### 2. Engine layer (server/src/engine)
+Create:
+- **types.ts**
+  - Define `FlowDef`, `StepNode` (kind: agent|tool), `Policy { timeoutMs, maxRetries }`, `Context` (Record<string, any>).
+- **graph.ts**
+  - `buildGraph(flow: FlowDef, registry: Registry): StateGraph`
+  - Compile steps → LangGraph nodes with edges (sequential for now).
+  - Each node validates input/output with zod.
+- **runtime.ts**
+  - `runFlow(flow: FlowDef, input: any, opts: RunOptions): Promise<RunResult>`
+  - Execute LangGraph graph with retries, context updates.
+  - Save checkpoints in Drizzle DB (table: run_checkpoints).
+- **log.ts**
+  - Wrapper around pino with tags `[session][agent|tool][step][mcp]`.
+
+### 3. Registry (server/src/registry.ts)
+- `registerAgent(name, agentDef)`, `registerTool(name, toolDef)`.
+- Return `Registry` object consumed by buildGraph.
+- Pre-register 4 agents + Notion exporter tool.
+
+### 4. Agents (server/src/agents)
+Each agent exports `createAgent()` returning a LangGraph node factory.
+- **transcriber.ts** → input { transcript?, audioUrl? } → output { transcript }.
+- **summariser.ts** → input { transcript } → output { summary, decisions[], openQuestions[] }.
+- **actionExtractor.ts** → input { transcript, summary } → output { actions: Array<{owner,task,due,priority,notes?}> }.
+- **publisher.ts** → input { summary, actions, export? } → output { report, exportResult? }.
+
+Use OpenAI client, enforce JSON with zod schema.
+
+### 5. Tools (server/src/tools)
+- **notion.ts**: Tool `notion.export` with args { databaseId, tasks: Task[] }, pushes tasks to Notion.
+- **speech.ts**: Tool `speech.to_text` (stub).
+- **slack.ts**: Tool `slack.post_message` (optional).
+
+### 6. MCP (server/src/mcp)
+- **server.ts**: minimal MCP server exposing `export_notion` and `slides.create_deck` (stub).
+- **client.ts**: MCP client helper (`invokeMcp(tool, args)`).
+- **mcp.json** manifest.
+
+### 7. FlowDef (flows/meeting_actions.json)
+Example JSON:
+```json
+{
+  "name": "Meeting → Actions",
+  "inputs": { "transcript": "string", "audioUrl": "string", "export": "string" },
+  "steps": [
+    { "kind": "agent", "name": "transcriber", "in": {"transcript":"$.transcript","audioUrl":"$.audioUrl"}, "out": {"transcript":"$.transcript"} },
+    { "kind": "agent", "name": "summariser", "in": {"transcript":"$.transcript"}, "out": {"summary":"$.summary","decisions":"$.decisions","openQuestions":"$.openQuestions"} },
+    { "kind": "agent", "name": "actionExtractor", "in": {"transcript":"$.transcript","summary":"$.summary"}, "out": {"actions":"$.actions"} },
+    { "kind": "tool", "name": "notion.export", "condition": "$.export == 'notion'", "args": {"databaseId":"env.NOTION_DB_ID","tasks":"$.actions"} },
+    { "kind": "agent", "name": "publisher", "in": {"summary":"$.summary","actions":"$.actions","export":"$.export"}, "out": {"report":"$.report","exportResult":"$.exportResult"} }
+  ]
+}
+
+8. Entry point (server/src/index.ts)
+
+Load .env
+
+Import flow JSON, build graph with registry
+
+Run runFlow() with a sample transcript
+
+Print final report
+
+If Notion env vars exist, export tasks
+
+9. Database
+
+Use Drizzle to create tables:
+
+runs(id, flow, status, started_at, finished_at)
+
+run_checkpoints(run_id, step_idx, status, context_json, created_at)
+
+memory(session_id, key, value_json, updated_at)
+
+10. Testing (test/e2e.spec.ts)
+
+Run meeting_actions.json with a canned transcript
+
+Assert summary is non-empty, actions length ≥ 1
+
+If Notion env vars exist, assert export attempt
+
+11. README.md
+
+Quick start instructions: install, .env, run dev
+
+How to add a new agent/tool
+
+How to run flows
+
+Future: parallelism, branching
+
+Acceptance Criteria
+
+npm run dev executes meeting_actions.json and prints report.
+
+Drizzle stores checkpoints.
+
+Logs include tags [session][agent][step][tool].
+
+E2E test passes with canned transcript.
+
+If NOTION_API_KEY set, notion.export step runs and returns IDs.
+
+Generate all new files with idiomatic TypeScript, clear comments, and working LangGraph integration.
