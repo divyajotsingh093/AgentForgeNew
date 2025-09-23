@@ -12,8 +12,9 @@ export default function Sidebar({ onClose }: SidebarProps) {
 
   const navItems = [
     { path: "/", label: "Dashboard", icon: "fas fa-home" },
+    { path: "/flows", label: "Flows", icon: "fas fa-project-diagram" },
     { path: "/agent-builder", label: "Agent Builder", icon: "fas fa-robot" },
-    { path: "/flow-builder", label: "Flow Builder", icon: "fas fa-project-diagram" },
+    { path: "/flow-builder", label: "Flow Builder", icon: "fas fa-code-branch" },
     { path: "/agents", label: "Agents", icon: "fas fa-users" },
     { path: "/tools", label: "Tools", icon: "fas fa-tools" },
     { path: "/runs", label: "Runs", icon: "fas fa-play-circle" },
