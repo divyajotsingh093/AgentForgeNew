@@ -193,7 +193,7 @@ class ExecutionEngine {
       userMessage = `${context._retry_instruction}\n\n${userMessage}`;
     }
 
-    const response = await generateAgentResponse(agent.systemPrompt, userMessage, context);
+    const response = await generateAgentResponse(agent.systemPrompt, userMessage, context, agent.id);
     
     // Store the full response for debugging
     context[`${agent.name}_output`] = response;

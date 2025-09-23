@@ -954,7 +954,7 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
     }
   });
 
-  // Test embedding generation endpoint (development only)
+  // Test endpoints (development only)
   if (process.env.NODE_ENV === 'development') {
     app.post('/api/test/embedding', isAuthenticated, async (req, res) => {
       try {
@@ -986,6 +986,126 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
         res.status(500).json({ 
           success: false,
           message: "Embedding generation failed", 
+          error: (error as Error).message 
+        });
+      }
+    });
+
+    // Test RAG search endpoint (development only)
+    app.post('/api/test/rag-search', isAuthenticated, async (req, res) => {
+      try {
+        const { 
+          query = "What is AgentFlow?", 
+          knowledgeBaseId = "1e92d15e-26f8-4f32-9a29-669de638f273",
+          threshold = 0.3
+        } = req.body;
+        
+        console.log(`🧪 Testing RAG search for query: "${query}"`);
+        
+        // First, check if the knowledge base exists
+        const kb = await storage.getKnowledgeBase(knowledgeBaseId);
+        console.log(`📋 Knowledge base exists: ${kb ? 'Yes' : 'No'}`, kb ? `(${kb.name})` : '');
+        
+        // Check how many knowledge items are in this knowledge base
+        const knowledgeItems = await storage.getKnowledgeItems(knowledgeBaseId);
+        console.log(`📄 Knowledge items in KB: ${knowledgeItems.length}`);
+        
+        // Check total embeddings across all knowledge items
+        let totalEmbeddings = 0;
+        for (const item of knowledgeItems) {
+          const embeddings = await storage.getEmbeddings(item.id);
+          totalEmbeddings += embeddings.length;
+        }
+        console.log(`🔢 Total embeddings: ${totalEmbeddings}`);
+        
+        const { EmbeddingService } = await import('./embeddingService');
+        const results = await EmbeddingService.searchSimilar(knowledgeBaseId, query, 10, threshold);
+        
+        console.log(`✅ RAG search found ${results.length} results`);
+        
+        res.json({
+          success: true,
+          query,
+          knowledgeBaseId,
+          threshold,
+          debug: {
+            knowledgeBaseExists: !!kb,
+            knowledgeBaseName: kb?.name,
+            knowledgeItemsCount: knowledgeItems.length,
+            totalEmbeddings
+          },
+          resultsCount: results.length,
+          results: results.map(r => ({
+            similarity: r.similarity,
+            chunkText: r.chunkText.substring(0, 200) + '...',
+            metadata: r.metadata
+          }))
+        });
+      } catch (error) {
+        console.error("❌ RAG search test failed:", error);
+        res.status(500).json({ 
+          success: false,
+          message: "RAG search failed", 
+          error: (error as Error).message 
+        });
+      }
+    });
+
+    // Test agent RAG integration endpoint (development only)
+    app.post('/api/test/agent-rag', isAuthenticated, async (req, res) => {
+      try {
+        const { userMessage = "What is AgentFlow?", agentId } = req.body;
+        
+        console.log(`🧪 Testing agent RAG integration for query: "${userMessage}"`);
+        
+        // First, create a mock agent with knowledge base association if agentId not provided
+        let testAgentId = agentId;
+        if (!testAgentId) {
+          // Use the existing knowledge base
+          const knowledgeBaseId = "1e92d15e-26f8-4f32-9a29-669de638f273";
+          
+          // Create a mock agent data
+          const mockAgent = {
+            projectId: "b9882355-4895-4a2d-9efc-e0d80d8d30fc",
+            name: "RAG Test Agent",
+            description: "Test agent for RAG functionality",
+            systemPrompt: "You are a helpful assistant that answers questions about AgentFlow using your knowledge base.",
+            userTemplate: "{{input}}",
+          };
+          
+          // Create the agent
+          const agent = await storage.createAgent(mockAgent);
+          testAgentId = agent.id;
+          
+          // Associate the knowledge base with the agent
+          await storage.updateKnowledgeBase(knowledgeBaseId, { agentId: testAgentId });
+          
+          console.log(`🤖 Created test agent ${testAgentId} and associated with KB ${knowledgeBaseId}`);
+        }
+        
+        // Test the RAG-enabled agent response generation
+        const { generateAgentResponse } = await import('./openaiClient');
+        const response = await generateAgentResponse(
+          "You are a helpful assistant that answers questions about AgentFlow using your knowledge base.",
+          userMessage,
+          {},
+          testAgentId
+        );
+        
+        console.log(`✅ Generated agent response with RAG`);
+        
+        res.json({
+          success: true,
+          userMessage,
+          agentId: testAgentId,
+          response,
+          message: "RAG integration test completed successfully"
+        });
+      } catch (error) {
+        console.error("❌ Agent RAG test failed:", error);
+        res.status(500).json({ 
+          success: false,
+          message: "Agent RAG test failed", 
           error: (error as Error).message 
         });
       }

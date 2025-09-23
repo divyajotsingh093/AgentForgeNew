@@ -286,6 +286,31 @@ export class EmbeddingService {
   }
 
   /**
+   * Calculate cosine similarity between two vectors
+   */
+  static cosineSimilarity(vectorA: number[], vectorB: number[]): number {
+    if (vectorA.length !== vectorB.length) {
+      throw new Error('Vectors must have the same length');
+    }
+
+    let dotProduct = 0;
+    let normA = 0;
+    let normB = 0;
+
+    for (let i = 0; i < vectorA.length; i++) {
+      dotProduct += vectorA[i] * vectorB[i];
+      normA += vectorA[i] * vectorA[i];
+      normB += vectorB[i] * vectorB[i];
+    }
+
+    if (normA === 0 || normB === 0) {
+      return 0; // No similarity if either vector is zero
+    }
+
+    return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+  }
+
+  /**
    * Search for similar content using vector similarity
    */
   static async searchSimilar(
@@ -295,15 +320,42 @@ export class EmbeddingService {
     threshold: number = 0.7
   ): Promise<any[]> {
     try {
+      console.log(`🔍 Searching knowledge base ${knowledgeBaseId} for: "${query}"`);
+      
       // Generate embedding for the query
       const queryEmbedding = await this.generateEmbedding(query);
       
-      // Search for similar embeddings in the database
-      // Note: This is a placeholder - actual vector similarity search 
-      // would require a vector database or similarity function
-      const results = await storage.searchEmbeddings(queryEmbedding, limit, knowledgeBaseId);
+      // Get all embeddings for this knowledge base
+      const allEmbeddings = await storage.searchEmbeddings(queryEmbedding, 1000, knowledgeBaseId); // Get many to sort properly
       
-      return results.filter(result => result.similarity > threshold);
+      // Calculate actual cosine similarity for each embedding
+      const resultsWithSimilarity = allEmbeddings.map(embedding => {
+        try {
+          const embeddingVector = JSON.parse(embedding.vector);
+          const similarity = this.cosineSimilarity(queryEmbedding, embeddingVector);
+          
+          return {
+            ...embedding,
+            similarity
+          };
+        } catch (error) {
+          console.error(`Error parsing embedding vector:`, error);
+          return {
+            ...embedding,
+            similarity: 0
+          };
+        }
+      });
+      
+      // Sort by similarity (highest first) and filter by threshold
+      const filteredResults = resultsWithSimilarity
+        .filter(result => result.similarity > threshold)
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, limit);
+      
+      console.log(`📊 Found ${filteredResults.length} relevant chunks (threshold: ${threshold})`);
+      
+      return filteredResults;
     } catch (error) {
       console.error('Error searching similar content:', error);
       throw error;
