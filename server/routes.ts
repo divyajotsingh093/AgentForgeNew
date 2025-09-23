@@ -400,13 +400,13 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
             req.file
           );
           
-          console.log(`✅ File processing completed: ${result.knowledgeItems.length} items, ${result.embeddings.length} embeddings`);
+          console.log(`✅ File processing completed: ${result.itemCount} items, ${result.embeddingsCount} embeddings`);
           
           res.json({
             message: "File uploaded and processed successfully",
-            knowledgeItems: result.knowledgeItems,
-            embeddings: result.embeddings.length,
             totalChunks: result.totalChunks,
+            embeddingsCount: result.embeddingsCount,
+            itemCount: result.itemCount,
             filename: req.file.originalname,
             size: req.file.size,
             mimeType: req.file.mimetype
@@ -953,6 +953,44 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
       });
     }
   });
+
+  // Test embedding generation endpoint (development only)
+  if (process.env.NODE_ENV === 'development') {
+    app.post('/api/test/embedding', isAuthenticated, async (req, res) => {
+      try {
+        const { text = "This is a test text for embedding generation." } = req.body;
+        
+        // Limit test text size
+        if (text.length > 1000) {
+          return res.status(400).json({ 
+            success: false,
+            message: "Test text too long (max 1000 characters)" 
+          });
+        }
+        
+        console.log('🧪 Testing embedding generation for text:', text.substring(0, 50) + '...');
+        
+        const { EmbeddingService } = await import('./embeddingService');
+        const embedding = await EmbeddingService.generateEmbedding(text);
+        
+        console.log('✅ Successfully generated embedding, length:', embedding.length);
+        
+        res.json({
+          success: true,
+          message: "Embedding generated successfully",
+          embeddingLength: embedding.length,
+          textLength: text.length
+        });
+      } catch (error) {
+        console.error("❌ Embedding generation test failed:", error);
+        res.status(500).json({ 
+          success: false,
+          message: "Embedding generation failed", 
+          error: (error as Error).message 
+        });
+      }
+    });
+  }
 
   // Template routes
   app.get('/api/templates', async (req, res) => {

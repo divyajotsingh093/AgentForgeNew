@@ -1,0 +1,29 @@
+This is a test document for the AgentFlow knowledge management system.
+
+The AgentFlow platform is a comprehensive no-code/low-code Agent Builder platform that enables users to create, manage, and orchestrate multi-agent AI workflows. 
+
+Key features include:
+- Visual workflow builder interface
+- Real-time monitoring and execution tracking
+- Tool integrations with Notion, Slack, and custom APIs
+- Text-to-agent generation capabilities
+- Template marketplace for quick instantiation
+- MCP protocol integration for external tool connectivity
+- Advanced capabilities including frontend generation, knowledge management, data fabric integration
+- Autonomous triggers and multi-agent orchestration
+
+The platform uses LangGraph as the execution spine to provide real functionality rather than just UI demonstrations. This enables sophisticated agent workflows with full traceability and observability.
+
+Knowledge management features include:
+- Document upload and processing
+- Vector embeddings using OpenAI's text-embedding-3-small model
+- Semantic search capabilities for retrieval-augmented generation (RAG)
+- Chunking strategy with configurable overlap for optimal retrieval
+- Multi-format support including text files, URLs, and structured data
+
+The system architecture consists of:
+- React frontend with TypeScript using Vite as the build tool
+- Express.js backend with TypeScript using ES modules
+- PostgreSQL database with Drizzle ORM
+- Real-time communication via WebSocket for execution monitoring
+- Authentication system supporting both Auth0 and dummy authentication for development

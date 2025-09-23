@@ -19,15 +19,17 @@ interface ChunkData {
 }
 
 interface ProcessingResult {
-  knowledgeItems: any[];
-  embeddings: any[];
   totalChunks: number;
+  embeddingsCount: number;
+  itemCount: number;
 }
 
 export class EmbeddingService {
   private static readonly CHUNK_SIZE = 1500; // Characters per chunk
   private static readonly CHUNK_OVERLAP = 200; // Overlap between chunks
   private static readonly EMBEDDING_MODEL = 'text-embedding-3-small';
+  private static readonly MAX_CHUNKS_PER_FILE = 300; // Prevent memory issues
+  private static readonly BATCH_SIZE = 50; // Batch embeddings for efficiency
 
   /**
    * Chunk text into manageable pieces with overlap
@@ -85,6 +87,24 @@ export class EmbeddingService {
   }
 
   /**
+   * Generate embeddings in batches for efficiency
+   */
+  static async generateEmbeddingsBatch(texts: string[]): Promise<number[][]> {
+    try {
+      const response = await openai.embeddings.create({
+        model: this.EMBEDDING_MODEL,
+        input: texts,
+        encoding_format: "float",
+      });
+
+      return response.data.map(item => item.embedding);
+    } catch (error) {
+      console.error('Error generating batch embeddings:', error);
+      throw new Error(`Failed to generate batch embeddings: ${error}`);
+    }
+  }
+
+  /**
    * Process a text file: chunk it, generate embeddings, and store in database
    */
   static async processTextFile(
@@ -99,75 +119,97 @@ export class EmbeddingService {
       
       // Chunk the text
       const chunks = this.chunkText(content);
+      
+      // Check if file is too large (prevent memory issues)
+      if (chunks.length > this.MAX_CHUNKS_PER_FILE) {
+        throw new Error(`File too large: ${chunks.length} chunks (max ${this.MAX_CHUNKS_PER_FILE}). Please upload smaller files.`);
+      }
+      
       console.log(`📄 Created ${chunks.length} chunks from ${filename}`);
 
-      const knowledgeItems: any[] = [];
-      const embeddings: any[] = [];
+      let itemCount = 0;
+      let embeddingsCount = 0;
 
-      // Process each chunk
-      for (let i = 0; i < chunks.length; i++) {
-        const chunk = chunks[i];
-        console.log(`🔍 Processing chunk ${i + 1}/${chunks.length}...`);
+      // Process chunks in batches to manage memory
+      for (let batchStart = 0; batchStart < chunks.length; batchStart += this.BATCH_SIZE) {
+        const batchEnd = Math.min(batchStart + this.BATCH_SIZE, chunks.length);
+        const batchChunks = chunks.slice(batchStart, batchEnd);
+        
+        console.log(`🔍 Processing batch ${Math.floor(batchStart / this.BATCH_SIZE) + 1}/${Math.ceil(chunks.length / this.BATCH_SIZE)} (chunks ${batchStart + 1}-${batchEnd})`);
 
-        // Create knowledge item for this chunk
-        const knowledgeItemData = insertKnowledgeItemSchema.parse({
-          knowledgeBaseId,
-          type: 'chunk',
-          title: `${filename} - Chunk ${chunk.metadata.chunkIndex + 1}`,
-          content: chunk.text,
-          metadata: {
-            ...metadata,
-            mimeType,
-            filename,
-            isChunk: true,
-            chunkIndex: chunk.metadata.chunkIndex,
-            totalChunks: chunk.metadata.totalChunks,
-            startPosition: chunk.metadata.startPosition,
-            endPosition: chunk.metadata.endPosition,
-            originalFileSize: content.length,
-            processedAt: new Date().toISOString()
-          }
-        });
-
-        const knowledgeItem = await storage.createKnowledgeItem(knowledgeItemData);
-        knowledgeItems.push(knowledgeItem);
-
-        // Generate embedding for this chunk
-        try {
-          const embedding = await this.generateEmbedding(chunk.text);
-          
-          const embeddingData = insertEmbeddingSchema.parse({
-            knowledgeItemId: knowledgeItem.id,
-            embedding,
-            model: this.EMBEDDING_MODEL,
+        // Create knowledge items for this batch
+        const knowledgeItems: any[] = [];
+        for (const chunk of batchChunks) {
+          const knowledgeItemData = insertKnowledgeItemSchema.parse({
+            knowledgeBaseId,
+            type: 'chunk',
+            title: `${filename} - Chunk ${chunk.metadata.chunkIndex + 1}`,
+            content: chunk.text,
             metadata: {
+              ...metadata,
+              mimeType,
+              filename,
+              isChunk: true,
               chunkIndex: chunk.metadata.chunkIndex,
-              chunkLength: chunk.text.length,
-              generatedAt: new Date().toISOString()
+              totalChunks: chunk.metadata.totalChunks,
+              startPosition: chunk.metadata.startPosition,
+              endPosition: chunk.metadata.endPosition,
+              originalFileSize: content.length,
+              processedAt: new Date().toISOString()
             }
           });
 
-          const embeddingRecord = await storage.createEmbedding(embeddingData);
-          embeddings.push(embeddingRecord);
-          
-          console.log(`✅ Generated embedding for chunk ${i + 1}`);
-        } catch (embeddingError) {
-          console.error(`❌ Failed to generate embedding for chunk ${i + 1}:`, embeddingError);
-          // Continue processing other chunks even if one fails
+          const knowledgeItem = await storage.createKnowledgeItem(knowledgeItemData);
+          knowledgeItems.push(knowledgeItem);
+          itemCount++;
         }
 
-        // Small delay to avoid rate limiting
-        if (i < chunks.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 100));
+        // Generate embeddings in batch
+        try {
+          const batchTexts = batchChunks.map(chunk => chunk.text);
+          const batchEmbeddings = await this.generateEmbeddingsBatch(batchTexts);
+          
+          // Store embeddings
+          for (let i = 0; i < batchEmbeddings.length; i++) {
+            const embedding = batchEmbeddings[i];
+            const chunk = batchChunks[i];
+            const knowledgeItem = knowledgeItems[i];
+            
+            const embeddingData = insertEmbeddingSchema.parse({
+              knowledgeItemId: knowledgeItem.id,
+              chunkIndex: chunk.metadata.chunkIndex,
+              chunkText: chunk.text,
+              vector: JSON.stringify(embedding), // Store as JSON string
+              metadata: {
+                chunkIndex: chunk.metadata.chunkIndex,
+                chunkLength: chunk.text.length,
+                generatedAt: new Date().toISOString(),
+                model: this.EMBEDDING_MODEL
+              }
+            });
+
+            await storage.createEmbedding(embeddingData);
+            embeddingsCount++;
+          }
+          
+          console.log(`✅ Generated ${batchEmbeddings.length} embeddings for batch`);
+        } catch (embeddingError) {
+          console.error(`❌ Failed to generate embeddings for batch:`, embeddingError);
+          // Continue processing other batches even if one fails
+        }
+
+        // Small delay between batches to avoid rate limiting
+        if (batchEnd < chunks.length) {
+          await new Promise(resolve => setTimeout(resolve, 200));
         }
       }
 
-      console.log(`✅ Successfully processed ${filename}: ${knowledgeItems.length} items, ${embeddings.length} embeddings`);
+      console.log(`✅ Successfully processed ${filename}: ${itemCount} items, ${embeddingsCount} embeddings`);
 
       return {
-        knowledgeItems,
-        embeddings,
-        totalChunks: chunks.length
+        totalChunks: chunks.length,
+        embeddingsCount,
+        itemCount
       };
     } catch (error) {
       console.error('Error processing text file:', error);

@@ -7,7 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface KnowledgeTabProps {
   agentData: any;
@@ -15,70 +18,212 @@ interface KnowledgeTabProps {
 }
 
 export default function KnowledgeTab({ agentData, setAgentData }: KnowledgeTabProps) {
-  const [knowledgeItems, setKnowledgeItems] = useState([
-    { id: "1", type: "file", title: "Product Documentation.pdf", status: "processed", size: "2.4 MB", chunks: 45 },
-    { id: "2", type: "url", title: "Company Website", status: "processing", size: "1.2 MB", chunks: 23 },
-    { id: "3", type: "text", title: "Custom Instructions", status: "processed", size: "0.8 KB", chunks: 2 }
-  ]);
-
   const [newUrl, setNewUrl] = useState("");
   const [newText, setNewText] = useState("");
+  const [selectedKnowledgeBase, setSelectedKnowledgeBase] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  // Query for knowledge bases
+  const { data: knowledgeBases = [], isLoading: loadingKnowledgeBases } = useQuery<any[]>({
+    queryKey: ["/api/agents", agentData?.id, "knowledge-bases"],
+    enabled: !!agentData?.id,
+  });
+
+  // Query for knowledge items
+  const { data: knowledgeItems = [], isLoading: loadingKnowledgeItems, refetch: refetchKnowledgeItems } = useQuery<any[]>({
+    queryKey: ["/api/knowledge-bases", selectedKnowledgeBase, "items"],
+    enabled: !!selectedKnowledgeBase,
+  });
+
+  // Auto-select first knowledge base or create one if none exists
+  useEffect(() => {
+    if (knowledgeBases.length > 0 && !selectedKnowledgeBase) {
+      setSelectedKnowledgeBase(knowledgeBases[0].id);
+    } else if (knowledgeBases.length === 0 && !loadingKnowledgeBases && agentData?.id) {
+      // Create a default knowledge base
+      createKnowledgeBase.mutate({
+        name: "Default Knowledge Base",
+        description: "Default knowledge base for this agent",
+        embeddingModel: "text-embedding-3-small",
+        vectorDimensions: 1536,
+        chunkSize: 1500,
+        chunkOverlap: 200
+      });
+    }
+  }, [knowledgeBases, selectedKnowledgeBase, loadingKnowledgeBases, agentData?.id]);
+
+  // Mutation for creating knowledge base
+  const createKnowledgeBase = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await apiRequest("POST", `/api/agents/${agentData.id}/knowledge-bases`, data);
+      return response.json();
+    },
+    onSuccess: (newKnowledgeBase) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/agents", agentData.id, "knowledge-bases"] });
+      setSelectedKnowledgeBase(newKnowledgeBase.id);
+      toast({
+        title: "Knowledge base created",
+        description: "Default knowledge base created successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to create knowledge base",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Mutation for file upload
+  const uploadFileMutation = useMutation({
+    mutationFn: async (file: File) => {
+      if (!selectedKnowledgeBase) {
+        throw new Error("No knowledge base selected");
+      }
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await fetch(`/api/knowledge-bases/${selectedKnowledgeBase}/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Upload failed');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (result) => {
+      refetchKnowledgeItems();
+      toast({
+        title: "File uploaded successfully",
+        description: `Processed ${result.totalChunks} chunks with ${result.embeddingsCount} embeddings`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Upload failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (files) {
+    if (files && selectedKnowledgeBase) {
       Array.from(files).forEach((file) => {
-        const newItem = {
-          id: Date.now().toString(),
-          type: "file",
-          title: file.name,
-          status: "uploading",
-          size: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
-          chunks: 0
-        };
-        setKnowledgeItems(prev => [...prev, newItem]);
+        uploadFileMutation.mutate(file);
+      });
+    } else if (!selectedKnowledgeBase) {
+      toast({
+        title: "No knowledge base",
+        description: "Please wait for knowledge base to be created",
+        variant: "destructive",
       });
     }
   };
 
+  // Mutation for adding knowledge items (URL and text)
+  const addKnowledgeItemMutation = useMutation({
+    mutationFn: async (data: { type: string, title: string, content: string, metadata?: any }) => {
+      if (!selectedKnowledgeBase) {
+        throw new Error("No knowledge base selected");
+      }
+      
+      const response = await apiRequest("POST", `/api/knowledge-bases/${selectedKnowledgeBase}/items`, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      refetchKnowledgeItems();
+      toast({
+        title: "Knowledge item added",
+        description: "Item added and processed successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to add item",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Mutation for deleting knowledge items
+  const deleteKnowledgeItemMutation = useMutation({
+    mutationFn: async (itemId: string) => {
+      const response = await apiRequest("DELETE", `/api/knowledge-items/${itemId}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      refetchKnowledgeItems();
+      toast({
+        title: "Item deleted",
+        description: "Knowledge item deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to delete item",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
   const addUrl = () => {
-    if (!newUrl.trim()) return;
-    const newItem = {
-      id: Date.now().toString(),
-      type: "url",
-      title: new URL(newUrl).hostname,
-      status: "processing",
-      size: "0 MB",
-      chunks: 0
-    };
-    setKnowledgeItems(prev => [...prev, newItem]);
-    setNewUrl("");
+    if (!newUrl.trim() || !selectedKnowledgeBase) return;
+    
+    try {
+      const urlObj = new URL(newUrl);
+      addKnowledgeItemMutation.mutate({
+        type: "url",
+        title: urlObj.hostname,
+        content: newUrl,
+        metadata: { originalUrl: newUrl }
+      });
+      setNewUrl("");
+    } catch (error) {
+      toast({
+        title: "Invalid URL",
+        description: "Please enter a valid URL",
+        variant: "destructive",
+      });
+    }
   };
 
   const addText = () => {
-    if (!newText.trim()) return;
-    const newItem = {
-      id: Date.now().toString(),
+    if (!newText.trim() || !selectedKnowledgeBase) return;
+    
+    addKnowledgeItemMutation.mutate({
       type: "text",
       title: "Custom Text",
-      status: "processed",
-      size: `${(newText.length / 1024).toFixed(1)} KB`,
-      chunks: Math.ceil(newText.length / 1000)
-    };
-    setKnowledgeItems(prev => [...prev, newItem]);
+      content: newText,
+      metadata: { 
+        length: newText.length,
+        source: "manual"
+      }
+    });
     setNewText("");
   };
 
   const removeItem = (id: string) => {
-    setKnowledgeItems(prev => prev.filter(item => item.id !== id));
+    deleteKnowledgeItemMutation.mutate(id);
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
+      case "completed":
       case "processed": return "fas fa-check-circle text-green-500";
       case "processing": return "fas fa-spinner fa-spin text-yellow-500";
       case "uploading": return "fas fa-upload text-blue-500";
       case "error": return "fas fa-exclamation-circle text-red-500";
+      case "pending": return "fas fa-clock text-yellow-500";
       default: return "fas fa-circle text-gray-400";
     }
   };
@@ -106,25 +251,34 @@ export default function KnowledgeTab({ agentData, setAgentData }: KnowledgeTabPr
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-primary" data-testid="knowledge-items-count">
-                {knowledgeItems.length}
+                {loadingKnowledgeItems ? "..." : knowledgeItems.length}
               </div>
               <div className="text-sm text-muted-foreground">Items</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-secondary" data-testid="knowledge-chunks-count">
-                {knowledgeItems.reduce((sum, item) => sum + item.chunks, 0)}
+                {loadingKnowledgeItems ? "..." : (knowledgeItems as any[]).reduce((sum: number, item: any) => {
+                  // Calculate chunks based on content length if not provided
+                  const chunks = item.metadata?.totalChunks || Math.ceil((item.content?.length || 0) / 1500);
+                  return sum + chunks;
+                }, 0)}
               </div>
               <div className="text-sm text-muted-foreground">Chunks</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-accent" data-testid="knowledge-storage-size">
-                4.4 MB
+                {loadingKnowledgeItems ? "..." : `${((knowledgeItems as any[]).reduce((sum: number, item: any) => {
+                  return sum + (item.content?.length || 0);
+                }, 0) / 1024 / 1024).toFixed(1)} MB`}
               </div>
               <div className="text-sm text-muted-foreground">Storage</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-500" data-testid="knowledge-embeddings-count">
-                1,536
+                {loadingKnowledgeItems ? "..." : (knowledgeItems as any[]).reduce((sum: number, item: any) => {
+                  const chunks = item.metadata?.totalChunks || Math.ceil((item.content?.length || 0) / 1500);
+                  return sum + chunks;
+                }, 0)}
               </div>
               <div className="text-sm text-muted-foreground">Embeddings</div>
             </div>
@@ -226,33 +380,48 @@ export default function KnowledgeTab({ agentData, setAgentData }: KnowledgeTabPr
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {knowledgeItems.map((item) => (
-              <div key={item.id} className="flex items-center gap-4 p-4 border border-border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <i className={`${getTypeIcon(item.type)} text-muted-foreground`}></i>
-                  <div className="flex-1">
-                    <div className="font-medium">{item.title}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {item.size} • {item.chunks} chunks
+            {loadingKnowledgeItems ? (
+              <div className="text-center py-8">
+                <i className="fas fa-spinner fa-spin text-2xl text-muted-foreground mb-2"></i>
+                <p className="text-muted-foreground">Loading knowledge items...</p>
+              </div>
+            ) : (knowledgeItems as any[]).length === 0 ? (
+              <div className="text-center py-8">
+                <i className="fas fa-book text-4xl text-muted-foreground mb-4"></i>
+                <p className="text-muted-foreground">No knowledge items yet. Upload files or add content to get started.</p>
+              </div>
+            ) : (
+              (knowledgeItems as any[]).map((item: any) => (
+                <div key={item.id} className="flex items-center gap-4 p-4 border border-border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <i className={`${getTypeIcon(item.type)} text-muted-foreground`}></i>
+                    <div className="flex-1">
+                      <div className="font-medium">{item.title}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {item.type === "file" && item.metadata?.mimeType && `${item.metadata.mimeType} • `}
+                        {item.content ? `${(item.content.length / 1024).toFixed(1)} KB` : "0 KB"} • 
+                        {item.metadata?.totalChunks || Math.ceil((item.content?.length || 0) / 1500)} chunks
+                      </div>
                     </div>
                   </div>
+                  <div className="flex items-center gap-3">
+                    <i className={getStatusIcon(item.processingStatus || "processed")}></i>
+                    <Badge variant={item.processingStatus === "completed" || item.isProcessed ? "default" : "secondary"}>
+                      {item.processingStatus || (item.isProcessed ? "processed" : "pending")}
+                    </Badge>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => removeItem(item.id)}
+                      data-testid={`button-remove-knowledge-${item.id}`}
+                      disabled={deleteKnowledgeItemMutation.isPending}
+                    >
+                      <i className="fas fa-trash text-destructive"></i>
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <i className={getStatusIcon(item.status)}></i>
-                  <Badge variant={item.status === "processed" ? "default" : "secondary"}>
-                    {item.status}
-                  </Badge>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => removeItem(item.id)}
-                    data-testid={`button-remove-knowledge-${item.id}`}
-                  >
-                    <i className="fas fa-trash text-destructive"></i>
-                  </Button>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </CardContent>
       </Card>
