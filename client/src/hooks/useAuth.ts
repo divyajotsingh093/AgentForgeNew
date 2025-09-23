@@ -25,7 +25,7 @@ export function useAuth() {
       setIsAuthenticated(true);
       setUser(DUMMY_USER);
       setIsLoading(false);
-    }, 500);
+    }, 100); // Reduced from 500ms to 100ms for faster auth
 
     return () => clearTimeout(timer);
   }, []);
@@ -46,7 +46,14 @@ export function useAuth() {
 
   const getAccessToken = async () => {
     if (!isAuthenticated) {
-      throw new Error('User not authenticated');
+      console.log('⚠️ Auth not ready yet, waiting...');
+      // Wait a bit for auth to complete if it's still loading
+      if (isLoading) {
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+      if (!isAuthenticated) {
+        throw new Error('User not authenticated');
+      }
     }
     return DUMMY_TOKEN;
   };
