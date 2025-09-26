@@ -159,125 +159,377 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
     
     const content = `
       <!-- Header -->
-      <header class="bg-white border-b border-border sticky top-0 z-50">
+      <header class="bg-white/95 backdrop-blur-md border-b border-border/10 sticky top-0 z-50 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div class="flex justify-between items-center h-16">
             <div class="flex items-center space-x-3">
-              <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+              <div class="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                 <i data-lucide="zap" class="w-5 h-5 text-white"></i>
               </div>
-              <span class="text-xl font-bold text-primary">AgentFlow</span>
+              <span class="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">AgentFlow</span>
             </div>
             
             <nav class="hidden md:flex items-center space-x-8">
-              <a href="#features" class="text-muted-foreground hover:text-foreground transition-colors">Features</a>
-              <a href="/pricing" class="text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
-              <a href="/about" class="text-muted-foreground hover:text-foreground transition-colors">About</a>
-              <a href="/contact" class="text-muted-foreground hover:text-foreground transition-colors">Contact</a>
+              <a href="#features" class="text-gray-600 hover:text-gray-900 transition-colors font-medium">Features</a>
+              <a href="/pricing" class="text-gray-600 hover:text-gray-900 transition-colors font-medium">Pricing</a>
+              <a href="#demo" class="text-gray-600 hover:text-gray-900 transition-colors font-medium">Demo</a>
+              <a href="/contact" class="text-gray-600 hover:text-gray-900 transition-colors font-medium">Contact</a>
             </nav>
             
             <div class="flex items-center space-x-4">
-              <a href="/api/auth/login" class="text-muted-foreground hover:text-foreground transition-colors">Sign In</a>
-              <a href="/api/auth/login?screen_hint=signup" class="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors">Get Started</a>
+              <a href="/api/auth/login" class="text-gray-600 hover:text-gray-900 transition-colors font-medium">Sign In</a>
+              <a href="/api/auth/login?screen_hint=signup" class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2.5 rounded-lg hover:shadow-lg transition-all duration-300 font-semibold">Get Started Free</a>
             </div>
           </div>
         </div>
       </header>
 
       <!-- Hero Section -->
-      <section class="bg-gradient-to-br from-primary/5 to-accent/10 py-20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 class="text-5xl md:text-6xl font-bold text-foreground mb-6 leading-tight">
-            Build Powerful <span class="text-primary">AI Agents</span><br>
-            Without Code
-          </h1>
-          <p class="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-            AgentFlow is the comprehensive no-code platform for building, orchestrating, and deploying 
-            multi-agent AI workflows. Connect tools, create flows, and let AI agents work for you.
+      <section class="relative min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 overflow-hidden">
+        <!-- Background decoration -->
+        <div class="absolute inset-0">
+          <div class="absolute top-20 left-10 w-72 h-72 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse"></div>
+          <div class="absolute top-40 right-10 w-72 h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse" style="animation-delay: 2s;"></div>
+          <div class="absolute -bottom-8 left-20 w-72 h-72 bg-pink-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse" style="animation-delay: 4s;"></div>
+        </div>
+        
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 text-center">
+          <!-- Main headline -->
+          <div class="mb-8">
+            <div class="inline-flex items-center px-4 py-2 bg-blue-50 rounded-full border border-blue-200 mb-6">
+              <i data-lucide="sparkles" class="w-4 h-4 text-blue-600 mr-2"></i>
+              <span class="text-blue-700 text-sm font-semibold">Meet your first AI workforce</span>
+            </div>
+            <h1 class="text-5xl md:text-7xl font-bold text-gray-900 mb-6 leading-tight">
+              Build <span class="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">AI Agents</span><br>
+              <span class="text-gray-700">in 30 seconds</span>
+            </h1>
+          </div>
+          
+          <p class="text-xl md:text-2xl text-gray-600 mb-12 max-w-4xl mx-auto leading-relaxed">
+            The visual no-code platform for building multi-agent AI workflows. 
+            <br class="hidden md:block">
+            Drag, drop, deploy – no coding required.
           </p>
-          <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="/api/auth/login?screen_hint=signup" class="bg-primary text-primary-foreground px-8 py-4 rounded-lg text-lg font-semibold hover:bg-primary/90 transition-colors">
-              Start Building Free
+          
+          <div class="flex flex-col sm:flex-row gap-6 justify-center mb-16">
+            <a href="/api/auth/login?screen_hint=signup" class="group relative bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+              <span class="relative z-10 flex items-center justify-center">
+                <i data-lucide="play" class="w-5 h-5 mr-2"></i>
+                Start Building Free
+              </span>
+              <div class="absolute inset-0 bg-gradient-to-r from-blue-700 to-purple-700 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </a>
-            <a href="#demo" class="border border-border px-8 py-4 rounded-lg text-lg font-semibold hover:bg-accent transition-colors">
+            <a href="#demo" class="group border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-xl text-lg font-semibold hover:border-gray-400 hover:shadow-lg transition-all duration-300 flex items-center justify-center">
+              <i data-lucide="video" class="w-5 h-5 mr-2"></i>
               Watch Demo
             </a>
+          </div>
+          
+          <!-- Visual Demo Preview -->
+          <div class="relative mx-auto max-w-5xl">
+            <div class="bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
+              <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center">
+                <div class="flex space-x-2">
+                  <div class="w-3 h-3 bg-red-400 rounded-full"></div>
+                  <div class="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                  <div class="w-3 h-3 bg-green-400 rounded-full"></div>
+                </div>
+                <div class="flex-1 text-center">
+                  <span class="text-gray-600 font-medium">AgentFlow Builder</span>
+                </div>
+              </div>
+              <div class="p-8 min-h-96 bg-gradient-to-br from-blue-50 to-purple-50 relative">
+                <!-- Workflow visualization -->
+                <div class="flex items-center justify-center space-x-8 mb-8">
+                  <div class="bg-white p-4 rounded-xl shadow-lg border-2 border-blue-200">
+                    <i data-lucide="mail" class="w-8 h-8 text-blue-600"></i>
+                  </div>
+                  <div class="flex-1 h-0.5 bg-gradient-to-r from-blue-300 to-purple-300 relative">
+                    <div class="absolute right-0 top-1/2 transform -translate-y-1/2 w-0 h-0 border-l-4 border-l-purple-300 border-y-4 border-y-transparent"></div>
+                  </div>
+                  <div class="bg-white p-4 rounded-xl shadow-lg border-2 border-purple-200">
+                    <i data-lucide="brain" class="w-8 h-8 text-purple-600"></i>
+                  </div>
+                  <div class="flex-1 h-0.5 bg-gradient-to-r from-purple-300 to-pink-300 relative">
+                    <div class="absolute right-0 top-1/2 transform -translate-y-1/2 w-0 h-0 border-l-4 border-l-pink-300 border-y-4 border-y-transparent"></div>
+                  </div>
+                  <div class="bg-white p-4 rounded-xl shadow-lg border-2 border-pink-200">
+                    <i data-lucide="send" class="w-8 h-8 text-pink-600"></i>
+                  </div>
+                </div>
+                <div class="text-center">
+                  <p class="text-gray-600 font-medium">Email → AI Agent → Action</p>
+                  <p class="text-gray-500 text-sm mt-2">Build complex workflows visually</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Stats Section -->
+      <section class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="text-center mb-16">
+            <div class="inline-flex items-center px-4 py-2 bg-green-50 rounded-full border border-green-200 mb-6">
+              <i data-lucide="trending-up" class="w-4 h-4 text-green-600 mr-2"></i>
+              <span class="text-green-700 text-sm font-semibold">Join 10,000+ teams building with AI</span>
+            </div>
+          </div>
+          
+          <div class="grid md:grid-cols-4 gap-8 mb-20">
+            <div class="text-center">
+              <div class="text-4xl md:text-5xl font-bold text-gray-900 mb-2">30s</div>
+              <div class="text-gray-600 font-medium">Setup Time</div>
+            </div>
+            <div class="text-center">
+              <div class="text-4xl md:text-5xl font-bold text-gray-900 mb-2">3,000+</div>
+              <div class="text-gray-600 font-medium">Integrations</div>
+            </div>
+            <div class="text-center">
+              <div class="text-4xl md:text-5xl font-bold text-gray-900 mb-2">99.9%</div>
+              <div class="text-gray-600 font-medium">Uptime</div>
+            </div>
+            <div class="text-center">
+              <div class="text-4xl md:text-5xl font-bold text-gray-900 mb-2">24/7</div>
+              <div class="text-gray-600 font-medium">AI Workforce</div>
+            </div>
           </div>
         </div>
       </section>
 
       <!-- Features Section -->
-      <section id="features" class="py-20 bg-muted/30">
+      <section id="features" class="py-20 bg-gradient-to-b from-gray-50 to-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div class="text-center mb-16">
-            <h2 class="text-4xl font-bold text-foreground mb-4">Everything You Need to Build AI Agents</h2>
-            <p class="text-xl text-muted-foreground max-w-3xl mx-auto">
-              From simple automations to complex multi-agent orchestrations, AgentFlow has all the tools you need.
+            <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Your AI Workforce, Simplified</h2>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+              From simple automations to complex multi-agent orchestrations, AgentFlow makes AI accessible to everyone.
             </p>
           </div>
           
-          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div class="bg-card p-8 rounded-xl border border-border hover:shadow-lg transition-shadow">
-              <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
-                <i data-lucide="brain" class="w-6 h-6 text-primary"></i>
+          <!-- Feature Grid -->
+          <div class="grid lg:grid-cols-3 gap-8 mb-20">
+            <div class="group relative bg-white p-8 rounded-2xl border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+              <div class="absolute inset-0 bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div class="relative z-10">
+                <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-6">
+                  <i data-lucide="mouse-pointer-click" class="w-7 h-7 text-white"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-4">Drag & Drop Builder</h3>
+                <p class="text-gray-600">Design complex workflows visually. Connect agents, tools, and data sources with simple drag-and-drop.</p>
               </div>
-              <h3 class="text-xl font-semibold mb-3">Visual Flow Builder</h3>
-              <p class="text-muted-foreground">Design complex agent workflows with our intuitive drag-and-drop interface. No coding required.</p>
             </div>
             
-            <div class="bg-card p-8 rounded-xl border border-border hover:shadow-lg transition-shadow">
-              <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
-                <i data-lucide="zap" class="w-6 h-6 text-primary"></i>
+            <div class="group relative bg-white p-8 rounded-2xl border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+              <div class="absolute inset-0 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div class="relative z-10">
+                <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-6">
+                  <i data-lucide="zap" class="w-7 h-7 text-white"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-4">LangGraph Powered</h3>
+                <p class="text-gray-600">Enterprise-grade execution engine with built-in reliability, scalability, and full observability.</p>
               </div>
-              <h3 class="text-xl font-semibold mb-3">LangGraph Execution</h3>
-              <p class="text-muted-foreground">Powered by LangGraph for reliable, scalable agent orchestration with full observability.</p>
             </div>
             
-            <div class="bg-card p-8 rounded-xl border border-border hover:shadow-lg transition-shadow">
-              <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
-                <i data-lucide="puzzle" class="w-6 h-6 text-primary"></i>
+            <div class="group relative bg-white p-8 rounded-2xl border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+              <div class="absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div class="relative z-10">
+                <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-6">
+                  <i data-lucide="puzzle" class="w-7 h-7 text-white"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-4">3,000+ Integrations</h3>
+                <p class="text-gray-600">Connect to every tool in your stack. Notion, Slack, OpenAI, Salesforce, and thousands more.</p>
               </div>
-              <h3 class="text-xl font-semibold mb-3">Rich Integrations</h3>
-              <p class="text-muted-foreground">Connect to Notion, Slack, OpenAI, and hundreds of other tools and services seamlessly.</p>
             </div>
             
-            <div class="bg-card p-8 rounded-xl border border-border hover:shadow-lg transition-shadow">
-              <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
-                <i data-lucide="database" class="w-6 h-6 text-primary"></i>
+            <div class="group relative bg-white p-8 rounded-2xl border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+              <div class="absolute inset-0 bg-gradient-to-br from-orange-50 to-red-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div class="relative z-10">
+                <div class="w-14 h-14 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center mb-6">
+                  <i data-lucide="database" class="w-7 h-7 text-white"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-4">Smart Knowledge Base</h3>
+                <p class="text-gray-600">Upload documents, scrape websites. Your AI agents have instant access to all your knowledge.</p>
               </div>
-              <h3 class="text-xl font-semibold mb-3">Smart Knowledge Base</h3>
-              <p class="text-muted-foreground">Upload documents and create searchable knowledge bases with vector embeddings and RAG capabilities.</p>
             </div>
             
-            <div class="bg-card p-8 rounded-xl border border-border hover:shadow-lg transition-shadow">
-              <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
-                <i data-lucide="activity" class="w-6 h-6 text-primary"></i>
+            <div class="group relative bg-white p-8 rounded-2xl border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+              <div class="absolute inset-0 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div class="relative z-10">
+                <div class="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center mb-6">
+                  <i data-lucide="activity" class="w-7 h-7 text-white"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-4">Real-time Monitoring</h3>
+                <p class="text-gray-600">Watch your agents work in real-time. Full execution logs, performance metrics, and debugging.</p>
               </div>
-              <h3 class="text-xl font-semibold mb-3">Real-time Monitoring</h3>
-              <p class="text-muted-foreground">Track agent performance, view execution logs, and debug workflows in real-time.</p>
             </div>
             
-            <div class="bg-card p-8 rounded-xl border border-border hover:shadow-lg transition-shadow">
-              <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
-                <i data-lucide="template" class="w-6 h-6 text-primary"></i>
+            <div class="group relative bg-white p-8 rounded-2xl border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+              <div class="absolute inset-0 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div class="relative z-10">
+                <div class="w-14 h-14 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-xl flex items-center justify-center mb-6">
+                  <i data-lucide="template" class="w-7 h-7 text-white"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-4">Ready-made Templates</h3>
+                <p class="text-gray-600">Start in seconds with 60+ pre-built workflows for sales, marketing, support, and operations.</p>
               </div>
-              <h3 class="text-xl font-semibold mb-3">Ready-made Templates</h3>
-              <p class="text-muted-foreground">Start quickly with pre-built templates for common use cases like meeting summaries and content processing.</p>
+            </div>
+          </div>
+          
+          <!-- Interactive Demo Section -->
+          <div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-12 text-center text-white relative overflow-hidden" id="demo">
+            <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%239C92AC" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
+            <div class="relative z-10">
+              <h2 class="text-3xl md:text-4xl font-bold mb-6">See AgentFlow in Action</h2>
+              <p class="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">Watch how Fortune 500 companies are using AgentFlow to automate their most complex workflows</p>
+              <a href="/api/auth/login?screen_hint=signup" class="inline-flex items-center bg-white text-gray-900 px-8 py-4 rounded-xl text-lg font-semibold hover:bg-gray-100 transition-colors">
+                <i data-lucide="play" class="w-5 h-5 mr-2"></i>
+                Try AgentFlow Now
+              </a>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- CTA Section -->
-      <section class="py-20 bg-primary text-primary-foreground">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 class="text-4xl font-bold mb-6">Ready to Build Your AI Agents?</h2>
-          <p class="text-xl mb-8 opacity-90">
-            Join thousands of teams using AgentFlow to automate workflows and boost productivity.
+      <!-- Social Proof Section -->
+      <section class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Trusted by Forward-Thinking Teams</h2>
+            <p class="text-xl text-gray-600">Join thousands of companies automating their workflows with AgentFlow</p>
+          </div>
+          
+          <!-- Customer logos -->
+          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 items-center justify-center opacity-60">
+            <div class="flex items-center justify-center">
+              <div class="text-2xl font-bold text-gray-400">TechCorp</div>
+            </div>
+            <div class="flex items-center justify-center">
+              <div class="text-2xl font-bold text-gray-400">InnovateLab</div>
+            </div>
+            <div class="flex items-center justify-center">
+              <div class="text-2xl font-bold text-gray-400">DataFlow Inc</div>
+            </div>
+            <div class="flex items-center justify-center">
+              <div class="text-2xl font-bold text-gray-400">SmartOps</div>
+            </div>
+            <div class="flex items-center justify-center">
+              <div class="text-2xl font-bold text-gray-400">CloudTech</div>
+            </div>
+            <div class="flex items-center justify-center">
+              <div class="text-2xl font-bold text-gray-400">AI Dynamics</div>
+            </div>
+          </div>
+          
+          <!-- Testimonials -->
+          <div class="grid md:grid-cols-3 gap-8 mt-20">
+            <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
+              <div class="flex items-center mb-4">
+                <div class="flex text-yellow-400">
+                  <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                  <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                  <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                  <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                  <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                </div>
+              </div>
+              <p class="text-gray-700 mb-6">"AgentFlow saved our team 30+ hours per week. The visual builder made it incredibly easy to automate our customer onboarding process."</p>
+              <div class="flex items-center">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center mr-4">
+                  <span class="text-white font-semibold">SK</span>
+                </div>
+                <div>
+                  <div class="font-semibold text-gray-900">Sarah Kim</div>
+                  <div class="text-gray-600 text-sm">Operations Manager</div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
+              <div class="flex items-center mb-4">
+                <div class="flex text-yellow-400">
+                  <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                  <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                  <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                  <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                  <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                </div>
+              </div>
+              <p class="text-gray-700 mb-6">"The multi-agent capabilities are game-changing. We built a complex sales pipeline automation that handles everything from lead scoring to follow-ups."</p>
+              <div class="flex items-center">
+                <div class="w-10 h-10 bg-gradient-to-br from-green-400 to-teal-500 rounded-full flex items-center justify-center mr-4">
+                  <span class="text-white font-semibold">MR</span>
+                </div>
+                <div>
+                  <div class="font-semibold text-gray-900">Michael Rodriguez</div>
+                  <div class="text-gray-600 text-sm">Sales Director</div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
+              <div class="flex items-center mb-4">
+                <div class="flex text-yellow-400">
+                  <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                  <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                  <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                  <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                  <i data-lucide="star" class="w-5 h-5 fill-current"></i>
+                </div>
+              </div>
+              <p class="text-gray-700 mb-6">"Finally, an AI platform that doesn't require a PhD to use. Our marketing team built their first agent in minutes, not months."</p>
+              <div class="flex items-center">
+                <div class="w-10 h-10 bg-gradient-to-br from-pink-400 to-red-500 rounded-full flex items-center justify-center mr-4">
+                  <span class="text-white font-semibold">EM</span>
+                </div>
+                <div>
+                  <div class="font-semibold text-gray-900">Emily Martinez</div>
+                  <div class="text-gray-600 text-sm">Marketing Lead</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Final CTA Section -->
+      <section class="py-24 bg-gradient-to-br from-gray-900 via-gray-800 to-blue-900 relative overflow-hidden">
+        <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Ccircle cx="20" cy="20" r="1"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-30"></div>
+        <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
+          <h2 class="text-4xl md:text-5xl font-bold mb-6">Ready to Build Your AI Workforce?</h2>
+          <p class="text-xl md:text-2xl text-gray-300 mb-10 leading-relaxed">
+            Join thousands of teams using AgentFlow to automate workflows,<br class="hidden md:block">
+            boost productivity, and focus on what matters most.
           </p>
-          <a href="/api/auth/login?screen_hint=signup" class="bg-white text-primary px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors inline-block">
-            Start Building for Free
-          </a>
+          
+          <div class="flex flex-col sm:flex-row gap-6 justify-center mb-12">
+            <a href="/api/auth/login?screen_hint=signup" class="group bg-white text-gray-900 px-10 py-5 rounded-xl text-lg font-bold hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-xl">
+              <span class="flex items-center justify-center">
+                <i data-lucide="rocket" class="w-6 h-6 mr-2"></i>
+                Start Building for Free
+              </span>
+            </a>
+            <a href="/contact" class="border-2 border-white/30 text-white px-10 py-5 rounded-xl text-lg font-bold hover:border-white/60 hover:bg-white/10 transition-all duration-300">
+              Talk to Sales
+            </a>
+          </div>
+          
+          <div class="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-8 text-gray-400">
+            <div class="flex items-center">
+              <i data-lucide="check" class="w-5 h-5 mr-2 text-green-400"></i>
+              <span>Free forever plan</span>
+            </div>
+            <div class="flex items-center">
+              <i data-lucide="check" class="w-5 h-5 mr-2 text-green-400"></i>
+              <span>30-second setup</span>
+            </div>
+            <div class="flex items-center">
+              <i data-lucide="check" class="w-5 h-5 mr-2 text-green-400"></i>
+              <span>No credit card required</span>
+            </div>
+          </div>
         </div>
       </section>
 
