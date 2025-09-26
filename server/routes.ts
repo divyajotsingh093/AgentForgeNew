@@ -47,6 +47,779 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
   // Auth middleware
   await setupAuth(app);
 
+  // Marketing website routes (static HTML)
+  const marketingHTML = (title: string, description: string, content: string, canonical?: string) => `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title} | AgentFlow - No-Code AI Agent Builder</title>
+    <meta name="description" content="${description}">
+    <meta name="keywords" content="AI agent builder, no-code, automation, workflow, LangGraph, multi-agent">
+    ${canonical ? `<link rel="canonical" href="${canonical}">` : ''}
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="${title} | AgentFlow">
+    <meta property="og:description" content="${description}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://agentflow.replit.app${canonical || ''}">
+    <meta property="og:image" content="https://agentflow.replit.app/og-image.png">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="${title} | AgentFlow">
+    <meta name="twitter:description" content="${description}">
+    <meta name="twitter:image" content="https://agentflow.replit.app/og-image.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              border: "hsl(214.3 31.8% 91.4%)",
+              input: "hsl(214.3 31.8% 91.4%)",
+              ring: "hsl(222.2 84% 4.9%)",
+              background: "hsl(0 0% 100%)",
+              foreground: "hsl(222.2 84% 4.9%)",
+              primary: {
+                DEFAULT: "hsl(222.2 47.4% 11.2%)",
+                foreground: "hsl(210 40% 98%)",
+              },
+              secondary: {
+                DEFAULT: "hsl(210 40% 94%)",
+                foreground: "hsl(222.2 84% 4.9%)",
+              },
+              accent: {
+                DEFAULT: "hsl(210 40% 94%)",
+                foreground: "hsl(222.2 84% 4.9%)",
+              },
+              muted: {
+                DEFAULT: "hsl(210 40% 96%)",
+                foreground: "hsl(215.4 16.3% 46.9%)",
+              },
+              card: {
+                DEFAULT: "hsl(0 0% 100%)",
+                foreground: "hsl(222.2 84% 4.9%)",
+              },
+            }
+          }
+        },
+        darkMode: "class",
+      }
+    </script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <!-- JSON-LD Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "AgentFlow",
+      "description": "No-code AI agent builder platform with LangGraph execution engine",
+      "url": "https://agentflow.replit.app",
+      "logo": "https://agentflow.replit.app/logo.png",
+      "sameAs": []
+    }
+    </script>
+</head>
+<body class="bg-background text-foreground">
+    ${content}
+    
+    <script>
+      // Initialize Lucide icons
+      lucide.createIcons();
+      
+      // Smooth scrolling for anchor links
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+          e.preventDefault();
+          document.querySelector(this.getAttribute('href')).scrollIntoView({
+            behavior: 'smooth'
+          });
+        });
+      });
+    </script>
+</body>
+</html>`;
+
+  // Landing Page
+  app.get('/', (req: any, res) => {
+    // Redirect to app if authenticated
+    if (req.user) {
+      return res.redirect('/app');
+    }
+    
+    const content = `
+      <!-- Header -->
+      <header class="bg-white border-b border-border sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex justify-between items-center h-16">
+            <div class="flex items-center space-x-3">
+              <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <i data-lucide="zap" class="w-5 h-5 text-white"></i>
+              </div>
+              <span class="text-xl font-bold text-primary">AgentFlow</span>
+            </div>
+            
+            <nav class="hidden md:flex items-center space-x-8">
+              <a href="#features" class="text-muted-foreground hover:text-foreground transition-colors">Features</a>
+              <a href="/pricing" class="text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
+              <a href="/about" class="text-muted-foreground hover:text-foreground transition-colors">About</a>
+              <a href="/contact" class="text-muted-foreground hover:text-foreground transition-colors">Contact</a>
+            </nav>
+            
+            <div class="flex items-center space-x-4">
+              <a href="/api/auth/login" class="text-muted-foreground hover:text-foreground transition-colors">Sign In</a>
+              <a href="/api/auth/login?screen_hint=signup" class="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors">Get Started</a>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Hero Section -->
+      <section class="bg-gradient-to-br from-primary/5 to-accent/10 py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 class="text-5xl md:text-6xl font-bold text-foreground mb-6 leading-tight">
+            Build Powerful <span class="text-primary">AI Agents</span><br>
+            Without Code
+          </h1>
+          <p class="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
+            AgentFlow is the comprehensive no-code platform for building, orchestrating, and deploying 
+            multi-agent AI workflows. Connect tools, create flows, and let AI agents work for you.
+          </p>
+          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="/api/auth/login?screen_hint=signup" class="bg-primary text-primary-foreground px-8 py-4 rounded-lg text-lg font-semibold hover:bg-primary/90 transition-colors">
+              Start Building Free
+            </a>
+            <a href="#demo" class="border border-border px-8 py-4 rounded-lg text-lg font-semibold hover:bg-accent transition-colors">
+              Watch Demo
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Features Section -->
+      <section id="features" class="py-20 bg-muted/30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="text-center mb-16">
+            <h2 class="text-4xl font-bold text-foreground mb-4">Everything You Need to Build AI Agents</h2>
+            <p class="text-xl text-muted-foreground max-w-3xl mx-auto">
+              From simple automations to complex multi-agent orchestrations, AgentFlow has all the tools you need.
+            </p>
+          </div>
+          
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div class="bg-card p-8 rounded-xl border border-border hover:shadow-lg transition-shadow">
+              <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
+                <i data-lucide="brain" class="w-6 h-6 text-primary"></i>
+              </div>
+              <h3 class="text-xl font-semibold mb-3">Visual Flow Builder</h3>
+              <p class="text-muted-foreground">Design complex agent workflows with our intuitive drag-and-drop interface. No coding required.</p>
+            </div>
+            
+            <div class="bg-card p-8 rounded-xl border border-border hover:shadow-lg transition-shadow">
+              <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
+                <i data-lucide="zap" class="w-6 h-6 text-primary"></i>
+              </div>
+              <h3 class="text-xl font-semibold mb-3">LangGraph Execution</h3>
+              <p class="text-muted-foreground">Powered by LangGraph for reliable, scalable agent orchestration with full observability.</p>
+            </div>
+            
+            <div class="bg-card p-8 rounded-xl border border-border hover:shadow-lg transition-shadow">
+              <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
+                <i data-lucide="puzzle" class="w-6 h-6 text-primary"></i>
+              </div>
+              <h3 class="text-xl font-semibold mb-3">Rich Integrations</h3>
+              <p class="text-muted-foreground">Connect to Notion, Slack, OpenAI, and hundreds of other tools and services seamlessly.</p>
+            </div>
+            
+            <div class="bg-card p-8 rounded-xl border border-border hover:shadow-lg transition-shadow">
+              <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
+                <i data-lucide="database" class="w-6 h-6 text-primary"></i>
+              </div>
+              <h3 class="text-xl font-semibold mb-3">Smart Knowledge Base</h3>
+              <p class="text-muted-foreground">Upload documents and create searchable knowledge bases with vector embeddings and RAG capabilities.</p>
+            </div>
+            
+            <div class="bg-card p-8 rounded-xl border border-border hover:shadow-lg transition-shadow">
+              <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
+                <i data-lucide="activity" class="w-6 h-6 text-primary"></i>
+              </div>
+              <h3 class="text-xl font-semibold mb-3">Real-time Monitoring</h3>
+              <p class="text-muted-foreground">Track agent performance, view execution logs, and debug workflows in real-time.</p>
+            </div>
+            
+            <div class="bg-card p-8 rounded-xl border border-border hover:shadow-lg transition-shadow">
+              <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
+                <i data-lucide="template" class="w-6 h-6 text-primary"></i>
+              </div>
+              <h3 class="text-xl font-semibold mb-3">Ready-made Templates</h3>
+              <p class="text-muted-foreground">Start quickly with pre-built templates for common use cases like meeting summaries and content processing.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CTA Section -->
+      <section class="py-20 bg-primary text-primary-foreground">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 class="text-4xl font-bold mb-6">Ready to Build Your AI Agents?</h2>
+          <p class="text-xl mb-8 opacity-90">
+            Join thousands of teams using AgentFlow to automate workflows and boost productivity.
+          </p>
+          <a href="/api/auth/login?screen_hint=signup" class="bg-white text-primary px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors inline-block">
+            Start Building for Free
+          </a>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="bg-muted py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="grid md:grid-cols-4 gap-8">
+            <div>
+              <div class="flex items-center space-x-3 mb-4">
+                <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                  <i data-lucide="zap" class="w-5 h-5 text-white"></i>
+                </div>
+                <span class="text-xl font-bold text-primary">AgentFlow</span>
+              </div>
+              <p class="text-muted-foreground">
+                The no-code AI agent builder platform that makes automation accessible to everyone.
+              </p>
+            </div>
+            
+            <div>
+              <h4 class="font-semibold mb-4">Product</h4>
+              <ul class="space-y-2 text-muted-foreground">
+                <li><a href="/features" class="hover:text-foreground transition-colors">Features</a></li>
+                <li><a href="/pricing" class="hover:text-foreground transition-colors">Pricing</a></li>
+                <li><a href="/templates" class="hover:text-foreground transition-colors">Templates</a></li>
+                <li><a href="/integrations" class="hover:text-foreground transition-colors">Integrations</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 class="font-semibold mb-4">Company</h4>
+              <ul class="space-y-2 text-muted-foreground">
+                <li><a href="/about" class="hover:text-foreground transition-colors">About</a></li>
+                <li><a href="/contact" class="hover:text-foreground transition-colors">Contact</a></li>
+                <li><a href="/privacy" class="hover:text-foreground transition-colors">Privacy</a></li>
+                <li><a href="/terms" class="hover:text-foreground transition-colors">Terms</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 class="font-semibold mb-4">Support</h4>
+              <ul class="space-y-2 text-muted-foreground">
+                <li><a href="/contact" class="hover:text-foreground transition-colors">Help Center</a></li>
+                <li><a href="/contact" class="hover:text-foreground transition-colors">Documentation</a></li>
+                <li><a href="/contact" class="hover:text-foreground transition-colors">Community</a></li>
+              </ul>
+            </div>
+          </div>
+          
+          <div class="border-t border-border mt-12 pt-8 text-center text-muted-foreground">
+            <p>&copy; 2024 AgentFlow. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
+    `;
+    
+    res.send(marketingHTML(
+      'Home', 
+      'Build powerful AI agents without code. AgentFlow is the comprehensive no-code platform for creating, orchestrating, and deploying multi-agent AI workflows.',
+      content,
+      '/'
+    ));
+  });
+
+  // SEO files
+  app.get('/robots.txt', (req, res) => {
+    res.type('text/plain');
+    res.send(`User-agent: *
+Allow: /
+Disallow: /app/
+Disallow: /api/
+
+Sitemap: https://agentflow.replit.app/sitemap.xml`);
+  });
+
+  app.get('/sitemap.xml', (req, res) => {
+    res.type('application/xml');
+    res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://agentflow.replit.app/</loc>
+    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://agentflow.replit.app/features</loc>
+    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://agentflow.replit.app/pricing</loc>
+    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://agentflow.replit.app/about</loc>
+    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://agentflow.replit.app/contact</loc>
+    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <priority>0.6</priority>
+  </url>
+</urlset>`);
+  });
+
+  // Pricing Page
+  app.get('/pricing', (req: any, res) => {
+    const content = `
+      <!-- Header -->
+      <header class="bg-white border-b border-border sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex justify-between items-center h-16">
+            <div class="flex items-center space-x-3">
+              <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <i data-lucide="zap" class="w-5 h-5 text-white"></i>
+              </div>
+              <span class="text-xl font-bold text-primary">AgentFlow</span>
+            </div>
+            
+            <nav class="hidden md:flex items-center space-x-8">
+              <a href="/" class="text-muted-foreground hover:text-foreground transition-colors">Home</a>
+              <a href="/#features" class="text-muted-foreground hover:text-foreground transition-colors">Features</a>
+              <a href="/about" class="text-muted-foreground hover:text-foreground transition-colors">About</a>
+              <a href="/contact" class="text-muted-foreground hover:text-foreground transition-colors">Contact</a>
+            </nav>
+            
+            <div class="flex items-center space-x-4">
+              <a href="/api/auth/login" class="text-muted-foreground hover:text-foreground transition-colors">Sign In</a>
+              <a href="/api/auth/login?screen_hint=signup" class="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors">Get Started</a>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Pricing Hero -->
+      <section class="py-20 bg-gradient-to-br from-primary/5 to-accent/10">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 class="text-5xl font-bold text-foreground mb-6">Simple, Transparent Pricing</h1>
+          <p class="text-xl text-muted-foreground mb-8">
+            Start free and scale as you grow. No hidden fees, no surprises.
+          </p>
+        </div>
+      </section>
+
+      <!-- Pricing Cards -->
+      <section class="py-20 -mt-10">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="grid md:grid-cols-3 gap-8">
+            <!-- Free Tier -->
+            <div class="bg-card p-8 rounded-xl border border-border hover:shadow-lg transition-shadow">
+              <div class="text-center mb-8">
+                <h3 class="text-2xl font-bold mb-2">Free</h3>
+                <div class="text-4xl font-bold mb-2">$0</div>
+                <div class="text-muted-foreground">per month</div>
+              </div>
+              <ul class="space-y-4 mb-8">
+                <li class="flex items-center">
+                  <i data-lucide="check" class="w-5 h-5 text-primary mr-3"></i>
+                  Up to 3 agents
+                </li>
+                <li class="flex items-center">
+                  <i data-lucide="check" class="w-5 h-5 text-primary mr-3"></i>
+                  5 flows per project
+                </li>
+                <li class="flex items-center">
+                  <i data-lucide="check" class="w-5 h-5 text-primary mr-3"></i>
+                  100 flow executions/month
+                </li>
+                <li class="flex items-center">
+                  <i data-lucide="check" class="w-5 h-5 text-primary mr-3"></i>
+                  Basic integrations
+                </li>
+                <li class="flex items-center">
+                  <i data-lucide="check" class="w-5 h-5 text-primary mr-3"></i>
+                  Community support
+                </li>
+              </ul>
+              <a href="/api/auth/login?screen_hint=signup" class="w-full bg-secondary text-secondary-foreground py-3 rounded-lg font-semibold hover:bg-secondary/90 transition-colors block text-center">
+                Get Started Free
+              </a>
+            </div>
+
+            <!-- Pro Tier -->
+            <div class="bg-card p-8 rounded-xl border-2 border-primary hover:shadow-xl transition-shadow relative">
+              <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                <div class="bg-primary text-primary-foreground px-4 py-2 rounded-full text-sm font-semibold">
+                  Most Popular
+                </div>
+              </div>
+              <div class="text-center mb-8">
+                <h3 class="text-2xl font-bold mb-2">Pro</h3>
+                <div class="text-4xl font-bold mb-2">$29</div>
+                <div class="text-muted-foreground">per month</div>
+              </div>
+              <ul class="space-y-4 mb-8">
+                <li class="flex items-center">
+                  <i data-lucide="check" class="w-5 h-5 text-primary mr-3"></i>
+                  Unlimited agents
+                </li>
+                <li class="flex items-center">
+                  <i data-lucide="check" class="w-5 h-5 text-primary mr-3"></i>
+                  Unlimited flows
+                </li>
+                <li class="flex items-center">
+                  <i data-lucide="check" class="w-5 h-5 text-primary mr-3"></i>
+                  10,000 executions/month
+                </li>
+                <li class="flex items-center">
+                  <i data-lucide="check" class="w-5 h-5 text-primary mr-3"></i>
+                  All integrations
+                </li>
+                <li class="flex items-center">
+                  <i data-lucide="check" class="w-5 h-5 text-primary mr-3"></i>
+                  Advanced analytics
+                </li>
+                <li class="flex items-center">
+                  <i data-lucide="check" class="w-5 h-5 text-primary mr-3"></i>
+                  Priority support
+                </li>
+              </ul>
+              <a href="/api/auth/login?screen_hint=signup" class="w-full bg-primary text-primary-foreground py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors block text-center">
+                Start Pro Trial
+              </a>
+            </div>
+
+            <!-- Enterprise Tier -->
+            <div class="bg-card p-8 rounded-xl border border-border hover:shadow-lg transition-shadow">
+              <div class="text-center mb-8">
+                <h3 class="text-2xl font-bold mb-2">Enterprise</h3>
+                <div class="text-4xl font-bold mb-2">Custom</div>
+                <div class="text-muted-foreground">contact us</div>
+              </div>
+              <ul class="space-y-4 mb-8">
+                <li class="flex items-center">
+                  <i data-lucide="check" class="w-5 h-5 text-primary mr-3"></i>
+                  Everything in Pro
+                </li>
+                <li class="flex items-center">
+                  <i data-lucide="check" class="w-5 h-5 text-primary mr-3"></i>
+                  Unlimited executions
+                </li>
+                <li class="flex items-center">
+                  <i data-lucide="check" class="w-5 h-5 text-primary mr-3"></i>
+                  Custom integrations
+                </li>
+                <li class="flex items-center">
+                  <i data-lucide="check" class="w-5 h-5 text-primary mr-3"></i>
+                  Dedicated support
+                </li>
+                <li class="flex items-center">
+                  <i data-lucide="check" class="w-5 h-5 text-primary mr-3"></i>
+                  SLA & security audit
+                </li>
+              </ul>
+              <a href="/contact" class="w-full bg-secondary text-secondary-foreground py-3 rounded-lg font-semibold hover:bg-secondary/90 transition-colors block text-center">
+                Contact Sales
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FAQ -->
+      <section class="py-20 bg-muted/30">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 class="text-4xl font-bold text-center mb-12">Frequently Asked Questions</h2>
+          <div class="space-y-6">
+            <div class="bg-card p-6 rounded-xl border border-border">
+              <h3 class="text-xl font-semibold mb-3">What's included in the free plan?</h3>
+              <p class="text-muted-foreground">The free plan includes up to 3 AI agents, 5 flows per project, 100 flow executions per month, and access to basic integrations with community support.</p>
+            </div>
+            <div class="bg-card p-6 rounded-xl border border-border">
+              <h3 class="text-xl font-semibold mb-3">Can I upgrade or downgrade at any time?</h3>
+              <p class="text-muted-foreground">Yes! You can change your plan at any time. Upgrades take effect immediately, while downgrades take effect at the end of your current billing period.</p>
+            </div>
+            <div class="bg-card p-6 rounded-xl border border-border">
+              <h3 class="text-xl font-semibold mb-3">What payment methods do you accept?</h3>
+              <p class="text-muted-foreground">We accept all major credit cards and offer invoicing for annual enterprise plans.</p>
+            </div>
+            <div class="bg-card p-6 rounded-xl border border-border">
+              <h3 class="text-xl font-semibold mb-3">Is there a free trial for paid plans?</h3>
+              <p class="text-muted-foreground">Yes! Pro plan comes with a 14-day free trial. No credit card required to start.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="bg-muted py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="grid md:grid-cols-4 gap-8">
+            <div>
+              <div class="flex items-center space-x-3 mb-4">
+                <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                  <i data-lucide="zap" class="w-5 h-5 text-white"></i>
+                </div>
+                <span class="text-xl font-bold text-primary">AgentFlow</span>
+              </div>
+              <p class="text-muted-foreground">
+                The no-code AI agent builder platform that makes automation accessible to everyone.
+              </p>
+            </div>
+            
+            <div>
+              <h4 class="font-semibold mb-4">Product</h4>
+              <ul class="space-y-2 text-muted-foreground">
+                <li><a href="/#features" class="hover:text-foreground transition-colors">Features</a></li>
+                <li><a href="/pricing" class="hover:text-foreground transition-colors">Pricing</a></li>
+                <li><a href="/app/templates" class="hover:text-foreground transition-colors">Templates</a></li>
+                <li><a href="/app/integrations" class="hover:text-foreground transition-colors">Integrations</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 class="font-semibold mb-4">Company</h4>
+              <ul class="space-y-2 text-muted-foreground">
+                <li><a href="/about" class="hover:text-foreground transition-colors">About</a></li>
+                <li><a href="/contact" class="hover:text-foreground transition-colors">Contact</a></li>
+                <li><a href="/privacy" class="hover:text-foreground transition-colors">Privacy</a></li>
+                <li><a href="/terms" class="hover:text-foreground transition-colors">Terms</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 class="font-semibold mb-4">Support</h4>
+              <ul class="space-y-2 text-muted-foreground">
+                <li><a href="/contact" class="hover:text-foreground transition-colors">Help Center</a></li>
+                <li><a href="/contact" class="hover:text-foreground transition-colors">Documentation</a></li>
+                <li><a href="/contact" class="hover:text-foreground transition-colors">Community</a></li>
+              </ul>
+            </div>
+          </div>
+          
+          <div class="border-t border-border mt-12 pt-8 text-center text-muted-foreground">
+            <p>&copy; 2024 AgentFlow. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
+    `;
+    
+    res.send(marketingHTML(
+      'Pricing', 
+      'Simple, transparent pricing for AgentFlow AI agent builder. Start free with up to 3 agents, upgrade to Pro for unlimited agents and advanced features.',
+      content,
+      '/pricing'
+    ));
+  });
+
+  // Contact Page  
+  app.get('/contact', (req: any, res) => {
+    const content = `
+      <!-- Header -->
+      <header class="bg-white border-b border-border sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex justify-between items-center h-16">
+            <div class="flex items-center space-x-3">
+              <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <i data-lucide="zap" class="w-5 h-5 text-white"></i>
+              </div>
+              <span class="text-xl font-bold text-primary">AgentFlow</span>
+            </div>
+            
+            <nav class="hidden md:flex items-center space-x-8">
+              <a href="/" class="text-muted-foreground hover:text-foreground transition-colors">Home</a>
+              <a href="/#features" class="text-muted-foreground hover:text-foreground transition-colors">Features</a>
+              <a href="/pricing" class="text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
+              <a href="/about" class="text-muted-foreground hover:text-foreground transition-colors">About</a>
+            </nav>
+            
+            <div class="flex items-center space-x-4">
+              <a href="/api/auth/login" class="text-muted-foreground hover:text-foreground transition-colors">Sign In</a>
+              <a href="/api/auth/login?screen_hint=signup" class="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors">Get Started</a>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Contact Hero -->
+      <section class="py-20 bg-gradient-to-br from-primary/5 to-accent/10">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 class="text-5xl font-bold text-foreground mb-6">Get in Touch</h1>
+          <p class="text-xl text-muted-foreground mb-8">
+            Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
+          </p>
+        </div>
+      </section>
+
+      <!-- Contact Content -->
+      <section class="py-20 -mt-10">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="grid lg:grid-cols-2 gap-12">
+            <!-- Contact Info -->
+            <div>
+              <h2 class="text-3xl font-bold mb-8">Let's start a conversation</h2>
+              <div class="space-y-6">
+                <div class="flex items-start space-x-4">
+                  <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+                    <i data-lucide="mail" class="w-6 h-6 text-primary"></i>
+                  </div>
+                  <div>
+                    <h3 class="text-xl font-semibold mb-2">Email us</h3>
+                    <p class="text-muted-foreground mb-2">Get in touch for support or sales inquiries</p>
+                    <a href="mailto:hello@agentflow.dev" class="text-primary hover:underline">hello@agentflow.dev</a>
+                  </div>
+                </div>
+                
+                <div class="flex items-start space-x-4">
+                  <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+                    <i data-lucide="message-circle" class="w-6 h-6 text-primary"></i>
+                  </div>
+                  <div>
+                    <h3 class="text-xl font-semibold mb-2">Live Chat</h3>
+                    <p class="text-muted-foreground mb-2">Chat with our team in real-time</p>
+                    <a href="/api/auth/login" class="text-primary hover:underline">Available in-app</a>
+                  </div>
+                </div>
+                
+                <div class="flex items-start space-x-4">
+                  <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+                    <i data-lucide="phone" class="w-6 h-6 text-primary"></i>
+                  </div>
+                  <div>
+                    <h3 class="text-xl font-semibold mb-2">Schedule a call</h3>
+                    <p class="text-muted-foreground mb-2">Book a demo or consultation</p>
+                    <a href="#" class="text-primary hover:underline">Book a meeting</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Contact Form -->
+            <div class="bg-card p-8 rounded-xl border border-border">
+              <form class="space-y-6">
+                <div class="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium mb-2">First Name</label>
+                    <input type="text" class="w-full px-4 py-2 rounded-lg border border-border focus:ring-2 focus:ring-primary focus:border-transparent">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-2">Last Name</label>
+                    <input type="text" class="w-full px-4 py-2 rounded-lg border border-border focus:ring-2 focus:ring-primary focus:border-transparent">
+                  </div>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium mb-2">Email</label>
+                  <input type="email" class="w-full px-4 py-2 rounded-lg border border-border focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium mb-2">Subject</label>
+                  <select class="w-full px-4 py-2 rounded-lg border border-border focus:ring-2 focus:ring-primary focus:border-transparent">
+                    <option>General Inquiry</option>
+                    <option>Sales Question</option>
+                    <option>Technical Support</option>
+                    <option>Partnership</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium mb-2">Message</label>
+                  <textarea rows="4" class="w-full px-4 py-2 rounded-lg border border-border focus:ring-2 focus:ring-primary focus:border-transparent"></textarea>
+                </div>
+                
+                <button type="submit" class="w-full bg-primary text-primary-foreground py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors">
+                  Send Message
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="bg-muted py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="grid md:grid-cols-4 gap-8">
+            <div>
+              <div class="flex items-center space-x-3 mb-4">
+                <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                  <i data-lucide="zap" class="w-5 h-5 text-white"></i>
+                </div>
+                <span class="text-xl font-bold text-primary">AgentFlow</span>
+              </div>
+              <p class="text-muted-foreground">
+                The no-code AI agent builder platform that makes automation accessible to everyone.
+              </p>
+            </div>
+            
+            <div>
+              <h4 class="font-semibold mb-4">Product</h4>
+              <ul class="space-y-2 text-muted-foreground">
+                <li><a href="/#features" class="hover:text-foreground transition-colors">Features</a></li>
+                <li><a href="/pricing" class="hover:text-foreground transition-colors">Pricing</a></li>
+                <li><a href="/app/templates" class="hover:text-foreground transition-colors">Templates</a></li>
+                <li><a href="/app/integrations" class="hover:text-foreground transition-colors">Integrations</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 class="font-semibold mb-4">Company</h4>
+              <ul class="space-y-2 text-muted-foreground">
+                <li><a href="/about" class="hover:text-foreground transition-colors">About</a></li>
+                <li><a href="/contact" class="hover:text-foreground transition-colors">Contact</a></li>
+                <li><a href="/privacy" class="hover:text-foreground transition-colors">Privacy</a></li>
+                <li><a href="/terms" class="hover:text-foreground transition-colors">Terms</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 class="font-semibold mb-4">Support</h4>
+              <ul class="space-y-2 text-muted-foreground">
+                <li><a href="/contact" class="hover:text-foreground transition-colors">Help Center</a></li>
+                <li><a href="/contact" class="hover:text-foreground transition-colors">Documentation</a></li>
+                <li><a href="/contact" class="hover:text-foreground transition-colors">Community</a></li>
+              </ul>
+            </div>
+          </div>
+          
+          <div class="border-t border-border mt-12 pt-8 text-center text-muted-foreground">
+            <p>&copy; 2024 AgentFlow. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
+    `;
+    
+    res.send(marketingHTML(
+      'Contact Us', 
+      'Get in touch with the AgentFlow team. We\'re here to help with sales inquiries, technical support, and any questions about our AI agent builder platform.',
+      content,
+      '/contact'
+    ));
+  });
+
+  // Serve SPA for /app routes
+  app.get('/app*', (req: any, res) => {
+    // This will be handled by the Vite middleware to serve the React SPA
+    res.redirect('/app');
+  });
+
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
