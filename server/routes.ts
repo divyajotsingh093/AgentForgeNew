@@ -158,109 +158,219 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
     }
     
     const content = `
+      <style>
+        /* Advanced Animations and Effects */
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-20px) rotate(5deg); }
+        }
+        
+        @keyframes gradient-shift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        
+        @keyframes pulse-glow {
+          0%, 100% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.3); }
+          50% { box-shadow: 0 0 80px rgba(59, 130, 246, 0.6); }
+        }
+        
+        @keyframes particle-drift {
+          0% { transform: translateY(0px) translateX(0px); opacity: 0; }
+          50% { opacity: 1; }
+          100% { transform: translateY(-300px) translateX(100px); opacity: 0; }
+        }
+        
+        @keyframes slide-up {
+          0% { transform: translateY(100px); opacity: 0; }
+          100% { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes zoom-in {
+          0% { transform: scale(0.8); opacity: 0; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        .animate-gradient { animation: gradient-shift 4s ease infinite; background-size: 200% 200%; }
+        .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+        .animate-particle { animation: particle-drift 8s linear infinite; }
+        .animate-slide-up { animation: slide-up 1s ease-out; }
+        .animate-zoom-in { animation: zoom-in 0.8s ease-out; }
+        
+        /* Interactive hover effects */
+        .hover-3d:hover { 
+          transform: perspective(1000px) rotateX(10deg) rotateY(10deg) scale3d(1.05, 1.05, 1.05); 
+          transition: all 0.3s ease; 
+        }
+        .hover-glow:hover { 
+          box-shadow: 0 20px 40px rgba(59, 130, 246, 0.4); 
+          transition: all 0.3s ease; 
+        }
+        .hover-lift:hover { 
+          transform: translateY(-10px) scale(1.02); 
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        
+        /* Particle system */
+        .particle {
+          position: absolute;
+          background: radial-gradient(circle, rgba(59, 130, 246, 0.8) 0%, transparent 70%);
+          border-radius: 50%;
+          pointer-events: none;
+        }
+        
+        /* Scroll animations */
+        .scroll-reveal {
+          opacity: 0;
+          transform: translateY(50px);
+          transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .scroll-reveal.revealed {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        
+        html { scroll-behavior: smooth; }
+      </style>
+
       <!-- Header -->
-      <header class="bg-white/95 backdrop-blur-md border-b border-border/10 sticky top-0 z-50 shadow-sm">
+      <header class="bg-black/90 backdrop-blur-md border-b border-white/10 sticky top-0 z-50 shadow-2xl">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div class="flex justify-between items-center h-16">
-            <div class="flex items-center space-x-3">
-              <div class="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+            <div class="flex items-center space-x-3 animate-slide-up">
+              <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center animate-pulse-glow">
                 <i data-lucide="zap" class="w-5 h-5 text-white"></i>
               </div>
-              <span class="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">AgentFlow</span>
+              <span class="text-xl font-bold bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient">AgentFlow</span>
             </div>
             
             <nav class="hidden md:flex items-center space-x-8">
-              <a href="#features" class="text-gray-600 hover:text-gray-900 transition-colors font-medium">Features</a>
-              <a href="/pricing" class="text-gray-600 hover:text-gray-900 transition-colors font-medium">Pricing</a>
-              <a href="#demo" class="text-gray-600 hover:text-gray-900 transition-colors font-medium">Demo</a>
-              <a href="/contact" class="text-gray-600 hover:text-gray-900 transition-colors font-medium">Contact</a>
+              <a href="#features" class="text-white/80 hover:text-white hover:scale-105 transition-all duration-300 font-medium">Features</a>
+              <a href="/pricing" class="text-white/80 hover:text-white hover:scale-105 transition-all duration-300 font-medium">Pricing</a>
+              <a href="#demo" class="text-white/80 hover:text-white hover:scale-105 transition-all duration-300 font-medium">Demo</a>
+              <a href="/contact" class="text-white/80 hover:text-white hover:scale-105 transition-all duration-300 font-medium">Contact</a>
             </nav>
             
-            <div class="flex items-center space-x-4">
-              <a href="/api/auth/login" class="text-gray-600 hover:text-gray-900 transition-colors font-medium">Sign In</a>
-              <a href="/api/auth/login?screen_hint=signup" class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2.5 rounded-lg hover:shadow-lg transition-all duration-300 font-semibold">Get Started Free</a>
+            <div class="flex items-center space-x-4 animate-slide-up" style="animation-delay: 0.2s;">
+              <a href="/api/auth/login" class="text-white/80 hover:text-white transition-all duration-300 font-medium">Sign In</a>
+              <a href="/api/auth/login?screen_hint=signup" class="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white px-6 py-2.5 rounded-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 font-semibold animate-gradient">Get Started Free</a>
             </div>
           </div>
         </div>
       </header>
 
-      <!-- Hero Section -->
-      <section class="relative min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 overflow-hidden">
-        <!-- Background decoration -->
+      <!-- Hero Section with Advanced Animations -->
+      <section class="relative min-h-screen overflow-hidden bg-gradient-to-br from-black via-gray-900 to-black">
+        <!-- Animated Background Elements -->
         <div class="absolute inset-0">
-          <div class="absolute top-20 left-10 w-72 h-72 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse"></div>
-          <div class="absolute top-40 right-10 w-72 h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse" style="animation-delay: 2s;"></div>
-          <div class="absolute -bottom-8 left-20 w-72 h-72 bg-pink-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse" style="animation-delay: 4s;"></div>
+          <!-- Simulated video background with animated gradients -->
+          <div class="absolute inset-0 bg-gradient-to-br from-blue-600/20 via-purple-600/30 to-pink-600/20 animate-gradient"></div>
+          
+          <!-- Floating particles -->
+          <div class="particle w-2 h-2 top-1/4 left-1/4 animate-particle" style="animation-delay: 0s;"></div>
+          <div class="particle w-3 h-3 top-1/3 left-3/4 animate-particle" style="animation-delay: 2s;"></div>
+          <div class="particle w-1 h-1 top-2/3 left-1/2 animate-particle" style="animation-delay: 4s;"></div>
+          <div class="particle w-2 h-2 top-3/4 left-1/4 animate-particle" style="animation-delay: 6s;"></div>
+          <div class="particle w-1 h-1 top-1/2 left-4/5 animate-particle" style="animation-delay: 3s;"></div>
+          
+          <!-- Floating geometric shapes -->
+          <div class="absolute top-20 left-10 w-72 h-72 bg-gradient-to-br from-blue-500/30 to-cyan-500/30 rounded-full filter blur-3xl animate-float"></div>
+          <div class="absolute top-40 right-10 w-96 h-96 bg-gradient-to-br from-purple-500/30 to-pink-500/30 rounded-full filter blur-3xl animate-float" style="animation-delay: 2s;"></div>
+          <div class="absolute bottom-20 left-1/3 w-64 h-64 bg-gradient-to-br from-indigo-500/30 to-blue-500/30 rounded-full filter blur-3xl animate-float" style="animation-delay: 4s;"></div>
         </div>
         
-        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 text-center">
-          <!-- Main headline -->
-          <div class="mb-8">
-            <div class="inline-flex items-center px-4 py-2 bg-blue-50 rounded-full border border-blue-200 mb-6">
-              <i data-lucide="sparkles" class="w-4 h-4 text-blue-600 mr-2"></i>
-              <span class="text-blue-700 text-sm font-semibold">Meet your first AI workforce</span>
+        <div class="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-16 text-center min-h-screen flex flex-col justify-center">
+          <!-- Announcement badge -->
+          <div class="mb-8 animate-zoom-in">
+            <div class="inline-flex items-center px-6 py-3 bg-white/10 backdrop-blur-md rounded-full border border-white/20 mb-8 hover-glow">
+              <i data-lucide="sparkles" class="w-5 h-5 text-blue-400 mr-3 animate-spin"></i>
+              <span class="text-blue-300 font-semibold text-lg">Meet Your AI Workforce Revolution</span>
             </div>
-            <h1 class="text-5xl md:text-7xl font-bold text-gray-900 mb-6 leading-tight">
-              Build <span class="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">AI Agents</span><br>
-              <span class="text-gray-700">in 30 seconds</span>
+          </div>
+
+          <!-- Kinetic Typography Hero -->
+          <div class="mb-12 animate-slide-up" style="animation-delay: 0.2s;">
+            <h1 class="text-6xl md:text-8xl font-black text-white mb-8 leading-tight">
+              <span class="block animate-slide-up">Build</span>
+              <span class="block bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient text-7xl md:text-9xl" style="animation-delay: 0.4s;">AI Agents</span>
+              <span class="block text-5xl md:text-7xl text-gray-300 animate-slide-up" style="animation-delay: 0.6s;">in Seconds</span>
             </h1>
           </div>
           
-          <p class="text-xl md:text-2xl text-gray-600 mb-12 max-w-4xl mx-auto leading-relaxed">
-            The visual no-code platform for building multi-agent AI workflows. 
+          <!-- Animated subtitle -->
+          <p class="text-2xl md:text-3xl text-gray-300 mb-16 max-w-5xl mx-auto leading-relaxed animate-slide-up" style="animation-delay: 0.8s;">
+            The most advanced <span class="text-blue-400 font-bold">visual platform</span> for building 
             <br class="hidden md:block">
-            Drag, drop, deploy – no coding required.
+            <span class="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent font-bold">multi-agent AI workflows</span>
           </p>
           
-          <div class="flex flex-col sm:flex-row gap-6 justify-center mb-16">
-            <a href="/api/auth/login?screen_hint=signup" class="group relative bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+          <!-- Interactive CTA buttons -->
+          <div class="flex flex-col sm:flex-row gap-8 justify-center mb-20 animate-zoom-in" style="animation-delay: 1s;">
+            <a href="/api/auth/login?screen_hint=signup" class="group relative bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white px-12 py-6 rounded-2xl text-xl font-bold hover:shadow-2xl hover:scale-110 transition-all duration-500 transform hover-3d overflow-hidden">
+              <div class="absolute inset-0 bg-gradient-to-r from-blue-700 via-purple-700 to-pink-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <span class="relative z-10 flex items-center justify-center">
-                <i data-lucide="play" class="w-5 h-5 mr-2"></i>
-                Start Building Free
+                <i data-lucide="rocket" class="w-6 h-6 mr-3 animate-bounce"></i>
+                Start Building Now
               </span>
-              <div class="absolute inset-0 bg-gradient-to-r from-blue-700 to-purple-700 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div class="absolute inset-0 bg-white/20 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
             </a>
-            <a href="#demo" class="group border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-xl text-lg font-semibold hover:border-gray-400 hover:shadow-lg transition-all duration-300 flex items-center justify-center">
-              <i data-lucide="video" class="w-5 h-5 mr-2"></i>
-              Watch Demo
+            <a href="#demo" class="group border-2 border-white/30 text-white px-12 py-6 rounded-2xl text-xl font-bold hover:border-white/60 hover:bg-white/10 hover:shadow-2xl hover:scale-110 transition-all duration-500 flex items-center justify-center backdrop-blur-md hover-3d">
+              <i data-lucide="play-circle" class="w-6 h-6 mr-3 group-hover:animate-pulse"></i>
+              Experience Demo
             </a>
           </div>
           
-          <!-- Visual Demo Preview -->
-          <div class="relative mx-auto max-w-5xl">
-            <div class="bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
-              <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center">
-                <div class="flex space-x-2">
-                  <div class="w-3 h-3 bg-red-400 rounded-full"></div>
-                  <div class="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                  <div class="w-3 h-3 bg-green-400 rounded-full"></div>
+          <!-- Interactive 3D Workflow Preview -->
+          <div class="relative mx-auto max-w-6xl hover-3d animate-zoom-in" style="animation-delay: 1.2s;">
+            <div class="bg-black/40 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10 overflow-hidden hover-glow">
+              <div class="bg-gradient-to-r from-gray-800/50 to-gray-900/50 px-8 py-6 border-b border-white/10 flex items-center">
+                <div class="flex space-x-3">
+                  <div class="w-4 h-4 bg-red-500 rounded-full animate-pulse"></div>
+                  <div class="w-4 h-4 bg-yellow-500 rounded-full animate-pulse" style="animation-delay: 0.2s;"></div>
+                  <div class="w-4 h-4 bg-green-500 rounded-full animate-pulse" style="animation-delay: 0.4s;"></div>
                 </div>
                 <div class="flex-1 text-center">
-                  <span class="text-gray-600 font-medium">AgentFlow Builder</span>
+                  <span class="text-white font-bold text-lg">AgentFlow Visual Builder</span>
                 </div>
               </div>
-              <div class="p-8 min-h-96 bg-gradient-to-br from-blue-50 to-purple-50 relative">
-                <!-- Workflow visualization -->
-                <div class="flex items-center justify-center space-x-8 mb-8">
-                  <div class="bg-white p-4 rounded-xl shadow-lg border-2 border-blue-200">
-                    <i data-lucide="mail" class="w-8 h-8 text-blue-600"></i>
+              <div class="p-12 min-h-96 bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-pink-900/20 relative overflow-hidden">
+                <!-- 3D Workflow visualization with animations -->
+                <div class="flex items-center justify-center space-x-12 mb-12">
+                  <div class="group bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-2xl shadow-2xl border-2 border-blue-400/50 hover:scale-110 hover-glow transition-all duration-300 animate-float">
+                    <i data-lucide="mail-open" class="w-12 h-12 text-white group-hover:animate-bounce"></i>
                   </div>
-                  <div class="flex-1 h-0.5 bg-gradient-to-r from-blue-300 to-purple-300 relative">
-                    <div class="absolute right-0 top-1/2 transform -translate-y-1/2 w-0 h-0 border-l-4 border-l-purple-300 border-y-4 border-y-transparent"></div>
+                  
+                  <!-- Animated connection line -->
+                  <div class="flex-1 h-1 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 relative animate-gradient rounded-full">
+                    <div class="absolute right-0 top-1/2 transform -translate-y-1/2 w-0 h-0 border-l-8 border-l-pink-400 border-y-8 border-y-transparent animate-pulse"></div>
+                    <!-- Moving dot animation -->
+                    <div class="absolute top-1/2 transform -translate-y-1/2 w-3 h-3 bg-white rounded-full animate-ping"></div>
                   </div>
-                  <div class="bg-white p-4 rounded-xl shadow-lg border-2 border-purple-200">
-                    <i data-lucide="brain" class="w-8 h-8 text-purple-600"></i>
+                  
+                  <div class="group bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-2xl shadow-2xl border-2 border-purple-400/50 hover:scale-110 hover-glow transition-all duration-300 animate-float" style="animation-delay: 1s;">
+                    <i data-lucide="brain-circuit" class="w-12 h-12 text-white group-hover:animate-spin"></i>
                   </div>
-                  <div class="flex-1 h-0.5 bg-gradient-to-r from-purple-300 to-pink-300 relative">
-                    <div class="absolute right-0 top-1/2 transform -translate-y-1/2 w-0 h-0 border-l-4 border-l-pink-300 border-y-4 border-y-transparent"></div>
+                  
+                  <div class="flex-1 h-1 bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 relative animate-gradient rounded-full">
+                    <div class="absolute right-0 top-1/2 transform -translate-y-1/2 w-0 h-0 border-l-8 border-l-red-400 border-y-8 border-y-transparent animate-pulse"></div>
+                    <div class="absolute top-1/2 transform -translate-y-1/2 w-3 h-3 bg-white rounded-full animate-ping" style="animation-delay: 1s;"></div>
                   </div>
-                  <div class="bg-white p-4 rounded-xl shadow-lg border-2 border-pink-200">
-                    <i data-lucide="send" class="w-8 h-8 text-pink-600"></i>
+                  
+                  <div class="group bg-gradient-to-br from-pink-500 to-red-500 p-6 rounded-2xl shadow-2xl border-2 border-pink-400/50 hover:scale-110 hover-glow transition-all duration-300 animate-float" style="animation-delay: 2s;">
+                    <i data-lucide="zap" class="w-12 h-12 text-white group-hover:animate-pulse"></i>
                   </div>
                 </div>
+                
                 <div class="text-center">
-                  <p class="text-gray-600 font-medium">Email → AI Agent → Action</p>
-                  <p class="text-gray-500 text-sm mt-2">Build complex workflows visually</p>
+                  <p class="text-white font-bold text-2xl mb-3">Email → AI Processing → Action</p>
+                  <p class="text-gray-300 text-lg">Build complex multi-agent workflows visually</p>
+                </div>
+                
+                <!-- Floating action indicators -->
+                <div class="absolute top-8 right-8 bg-green-500/20 backdrop-blur-md border border-green-400/30 rounded-full px-4 py-2 animate-pulse">
+                  <span class="text-green-300 font-semibold text-sm">● Live Processing</span>
                 </div>
               </div>
             </div>
