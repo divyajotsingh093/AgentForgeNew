@@ -196,7 +196,7 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
         
         parallax.forEach(element => {
           const yPos = -(scrolled * speed);
-          element.style.transform = `translate3d(0, ${yPos}px, 0)`;
+          element.style.transform = 'translate3d(0, ' + yPos + 'px, 0)';
         });
       });
       
@@ -207,7 +207,7 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
           const speed = (index + 1) * 0.02;
           const x = (e.clientX * speed);
           const y = (e.clientY * speed);
-          particle.style.transform = `translate(${x}px, ${y}px)`;
+          particle.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
         });
       });
       
@@ -564,22 +564,23 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
             </h2>
           </div>
           
+          <!-- Interactive animated stats -->
           <div class="grid md:grid-cols-4 gap-8 mb-20">
-            <div class="text-center">
-              <div class="text-4xl md:text-5xl font-bold text-gray-900 mb-2">30s</div>
-              <div class="text-gray-600 font-medium">Setup Time</div>
+            <div class="group text-center p-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl hover-glow hover-lift transition-all duration-500 scroll-reveal">
+              <div class="text-4xl md:text-5xl font-black bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-2 group-hover:scale-110 transition-transform duration-300">30s</div>
+              <div class="text-gray-300 font-medium">Setup Time</div>
             </div>
-            <div class="text-center">
-              <div class="text-4xl md:text-5xl font-bold text-gray-900 mb-2">3,000+</div>
-              <div class="text-gray-600 font-medium">Integrations</div>
+            <div class="group text-center p-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl hover-glow hover-lift transition-all duration-500 scroll-reveal" style="animation-delay: 0.2s;">
+              <div class="text-4xl md:text-5xl font-black bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-2 group-hover:scale-110 transition-transform duration-300">3,000+</div>
+              <div class="text-gray-300 font-medium">Integrations</div>
             </div>
-            <div class="text-center">
-              <div class="text-4xl md:text-5xl font-bold text-gray-900 mb-2">99.9%</div>
-              <div class="text-gray-600 font-medium">Uptime</div>
+            <div class="group text-center p-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl hover-glow hover-lift transition-all duration-500 scroll-reveal" style="animation-delay: 0.4s;">
+              <div class="text-4xl md:text-5xl font-black bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent mb-2 group-hover:scale-110 transition-transform duration-300">99.9%</div>
+              <div class="text-gray-300 font-medium">Uptime</div>
             </div>
-            <div class="text-center">
-              <div class="text-4xl md:text-5xl font-bold text-gray-900 mb-2">24/7</div>
-              <div class="text-gray-600 font-medium">AI Workforce</div>
+            <div class="group text-center p-8 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl hover-glow hover-lift transition-all duration-500 scroll-reveal" style="animation-delay: 0.6s;">
+              <div class="text-4xl md:text-5xl font-black bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent mb-2 group-hover:scale-110 transition-transform duration-300">24/7</div>
+              <div class="text-gray-300 font-medium">AI Workforce</div>
             </div>
           </div>
         </div>
