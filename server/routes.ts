@@ -586,6 +586,587 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
         </div>
       </section>
 
+      <!-- Use Cases with ROI Section -->
+      <section class="py-32 bg-gradient-to-br from-gray-900 via-black to-blue-900 relative overflow-hidden">
+        <!-- Background elements -->
+        <div class="absolute inset-0">
+          <div class="absolute top-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full filter blur-3xl animate-float"></div>
+          <div class="absolute bottom-0 left-1/4 w-80 h-80 bg-purple-500/10 rounded-full filter blur-3xl animate-float" style="animation-delay: 4s;"></div>
+        </div>
+        
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="text-center mb-20 scroll-reveal">
+            <div class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-500/20 to-blue-500/20 backdrop-blur-md rounded-full border border-green-400/30 mb-8">
+              <i data-lucide="trending-up" class="w-5 h-5 text-green-400 mr-3 animate-pulse"></i>
+              <span class="text-green-300 font-semibold text-lg">Proven ROI & Results</span>
+            </div>
+            <h2 class="text-5xl md:text-6xl font-black text-white mb-6">
+              Real businesses,
+              <br>
+              <span class="bg-gradient-to-r from-green-400 via-blue-400 to-purple-400 bg-clip-text text-transparent animate-gradient">real results</span>
+            </h2>
+            <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+              See how companies are saving 10-40 hours per week and reducing operational costs by 60% with AgentFlow.
+            </p>
+          </div>
+          
+          <!-- ROI Showcase Grid -->
+          <div class="grid lg:grid-cols-2 gap-12 mb-20">
+            <!-- Finance Use Case -->
+            <div class="group bg-gradient-to-br from-green-900/20 to-emerald-900/20 backdrop-blur-xl border border-green-400/20 rounded-3xl p-8 hover-glow hover-lift transition-all duration-500 scroll-reveal">
+              <div class="flex items-center mb-6">
+                <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mr-4">
+                  <i data-lucide="trending-up" class="w-8 h-8 text-white"></i>
+                </div>
+                <div>
+                  <h3 class="text-2xl font-bold text-white">Investment Research</h3>
+                  <p class="text-green-300">Financial Services</p>
+                </div>
+              </div>
+              <div class="space-y-4 mb-6">
+                <div class="flex items-center justify-between">
+                  <span class="text-gray-300">Research Time</span>
+                  <span class="text-xl font-bold text-white">8 hours → 15 minutes</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-gray-300">Cost Reduction</span>
+                  <span class="text-xl font-bold text-green-400">40% less research costs</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-gray-300">Accuracy Improvement</span>
+                  <span class="text-xl font-bold text-blue-400">95% data accuracy</span>
+                </div>
+              </div>
+              <p class="text-gray-300 mb-6">
+                Automated investment memo generation, KYC/AML compliance, and due diligence processes that previously took entire teams now run autonomously.
+              </p>
+              <div class="flex items-center text-green-400 font-semibold group-hover:text-green-300 transition-colors">
+                <span>View case study</span>
+                <i data-lucide="arrow-right" class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"></i>
+              </div>
+            </div>
+
+            <!-- Marketing Use Case -->
+            <div class="group bg-gradient-to-br from-purple-900/20 to-pink-900/20 backdrop-blur-xl border border-purple-400/20 rounded-3xl p-8 hover-glow hover-lift transition-all duration-500 scroll-reveal" style="animation-delay: 0.2s;">
+              <div class="flex items-center mb-6">
+                <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mr-4">
+                  <i data-lucide="megaphone" class="w-8 h-8 text-white"></i>
+                </div>
+                <div>
+                  <h3 class="text-2xl font-bold text-white">Content & Lead Generation</h3>
+                  <p class="text-purple-300">Marketing Agency</p>
+                </div>
+              </div>
+              <div class="space-y-4 mb-6">
+                <div class="flex items-center justify-between">
+                  <span class="text-gray-300">Content Creation</span>
+                  <span class="text-xl font-bold text-white">20 hours → 2 hours</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-gray-300">Lead Quality</span>
+                  <span class="text-xl font-bold text-purple-400">3x better targeting</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-gray-300">Campaign ROI</span>
+                  <span class="text-xl font-bold text-pink-400">250% increase</span>
+                </div>
+              </div>
+              <p class="text-gray-300 mb-6">
+                Multi-channel content distribution, SEO optimization, and personalized lead nurturing campaigns that scale automatically across platforms.
+              </p>
+              <div class="flex items-center text-purple-400 font-semibold group-hover:text-purple-300 transition-colors">
+                <span>View case study</span>
+                <i data-lucide="arrow-right" class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"></i>
+              </div>
+            </div>
+
+            <!-- Healthcare Use Case -->
+            <div class="group bg-gradient-to-br from-blue-900/20 to-cyan-900/20 backdrop-blur-xl border border-blue-400/20 rounded-3xl p-8 hover-glow hover-lift transition-all duration-500 scroll-reveal" style="animation-delay: 0.4s;">
+              <div class="flex items-center mb-6">
+                <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-2xl flex items-center justify-center mr-4">
+                  <i data-lucide="heart-pulse" class="w-8 h-8 text-white"></i>
+                </div>
+                <div>
+                  <h3 class="text-2xl font-bold text-white">Patient Document Processing</h3>
+                  <p class="text-blue-300">Healthcare System</p>
+                </div>
+              </div>
+              <div class="space-y-4 mb-6">
+                <div class="flex items-center justify-between">
+                  <span class="text-gray-300">Processing Time</span>
+                  <span class="text-xl font-bold text-white">6 hours → 30 minutes</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-gray-300">Error Reduction</span>
+                  <span class="text-xl font-bold text-blue-400">85% fewer errors</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-gray-300">Compliance</span>
+                  <span class="text-xl font-bold text-cyan-400">100% HIPAA compliant</span>
+                </div>
+              </div>
+              <p class="text-gray-300 mb-6">
+                Automated medical record analysis, patient data extraction, and regulatory compliance reporting with bank-level security.
+              </p>
+              <div class="flex items-center text-blue-400 font-semibold group-hover:text-blue-300 transition-colors">
+                <span>View case study</span>
+                <i data-lucide="arrow-right" class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"></i>
+              </div>
+            </div>
+
+            <!-- Operations Use Case -->
+            <div class="group bg-gradient-to-br from-orange-900/20 to-red-900/20 backdrop-blur-xl border border-orange-400/20 rounded-3xl p-8 hover-glow hover-lift transition-all duration-500 scroll-reveal" style="animation-delay: 0.6s;">
+              <div class="flex items-center mb-6">
+                <div class="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center mr-4">
+                  <i data-lucide="settings" class="w-8 h-8 text-white"></i>
+                </div>
+                <div>
+                  <h3 class="text-2xl font-bold text-white">Supply Chain Automation</h3>
+                  <p class="text-orange-300">Manufacturing</p>
+                </div>
+              </div>
+              <div class="space-y-4 mb-6">
+                <div class="flex items-center justify-between">
+                  <span class="text-gray-300">Order Processing</span>
+                  <span class="text-xl font-bold text-white">24/7 automation</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-gray-300">Cost Savings</span>
+                  <span class="text-xl font-bold text-orange-400">60% operational costs</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-gray-300">Efficiency Gain</span>
+                  <span class="text-xl font-bold text-red-400">10x faster processing</span>
+                </div>
+              </div>
+              <p class="text-gray-300 mb-6">
+                End-to-end supply chain orchestration, vendor management, quality control, and predictive maintenance workflows.
+              </p>
+              <div class="flex items-center text-orange-400 font-semibold group-hover:text-orange-300 transition-colors">
+                <span>View case study</span>
+                <i data-lucide="arrow-right" class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Stats Banner -->
+          <div class="bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-pink-600/20 backdrop-blur-xl border border-white/10 rounded-3xl p-8 text-center scroll-reveal">
+            <div class="grid md:grid-cols-4 gap-8">
+              <div>
+                <div class="text-3xl md:text-4xl font-black bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-2">98%</div>
+                <div class="text-gray-300 font-medium">Time Saved on Repetitive Tasks</div>
+              </div>
+              <div>
+                <div class="text-3xl md:text-4xl font-black bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">$2.4M</div>
+                <div class="text-gray-300 font-medium">Average Annual Cost Savings</div>
+              </div>
+              <div>
+                <div class="text-3xl md:text-4xl font-black bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent mb-2">72hrs</div>
+                <div class="text-gray-300 font-medium">Average Weekly Time Savings</div>
+              </div>
+              <div>
+                <div class="text-3xl md:text-4xl font-black bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent mb-2">3 Days</div>
+                <div class="text-gray-300 font-medium">Average Setup Time</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Industry Solutions Section -->
+      <section class="py-32 bg-gradient-to-br from-black via-gray-900 to-black relative overflow-hidden">
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="text-center mb-20 scroll-reveal">
+            <div class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 backdrop-blur-md rounded-full border border-indigo-400/30 mb-8">
+              <i data-lucide="building-2" class="w-5 h-5 text-indigo-400 mr-3 animate-pulse"></i>
+              <span class="text-indigo-300 font-semibold text-lg">Industry Solutions</span>
+            </div>
+            <h2 class="text-5xl md:text-6xl font-black text-white mb-6">
+              Purpose-built for
+              <br>
+              <span class="bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient">every industry</span>
+            </h2>
+            <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+              From Fortune 500 financial institutions to cutting-edge startups, AgentFlow adapts to your industry's unique requirements.
+            </p>
+          </div>
+
+          <!-- Industry Grid -->
+          <div class="grid lg:grid-cols-2 gap-8 mb-16">
+            <!-- Financial Services -->
+            <div class="group bg-gradient-to-br from-green-900/20 to-emerald-900/20 backdrop-blur-xl border border-green-400/20 rounded-2xl p-8 hover-glow hover-lift transition-all duration-500 scroll-reveal">
+              <div class="flex items-center mb-6">
+                <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mr-4">
+                  <i data-lucide="banknote" class="w-7 h-7 text-white"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-white">Financial Services</h3>
+              </div>
+              <ul class="space-y-3 mb-6 text-gray-300">
+                <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-green-400 mr-3"></i>Investment research & due diligence</li>
+                <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-green-400 mr-3"></i>KYC/AML compliance automation</li>
+                <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-green-400 mr-3"></i>Risk assessment & fraud detection</li>
+                <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-green-400 mr-3"></i>Regulatory reporting workflows</li>
+              </ul>
+              <p class="text-sm text-gray-400 mb-4">SOC 2, GDPR, PCI DSS compliant • Bank-level encryption</p>
+            </div>
+
+            <!-- Healthcare -->
+            <div class="group bg-gradient-to-br from-blue-900/20 to-cyan-900/20 backdrop-blur-xl border border-blue-400/20 rounded-2xl p-8 hover-glow hover-lift transition-all duration-500 scroll-reveal" style="animation-delay: 0.2s;">
+              <div class="flex items-center mb-6">
+                <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center mr-4">
+                  <i data-lucide="heart-pulse" class="w-7 h-7 text-white"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-white">Healthcare</h3>
+              </div>
+              <ul class="space-y-3 mb-6 text-gray-300">
+                <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-blue-400 mr-3"></i>Patient data processing & analysis</li>
+                <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-blue-400 mr-3"></i>Clinical workflow automation</li>
+                <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-blue-400 mr-3"></i>Medical record management</li>
+                <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-blue-400 mr-3"></i>Appointment scheduling & coordination</li>
+              </ul>
+              <p class="text-sm text-gray-400 mb-4">HIPAA compliant • Medical-grade security standards</p>
+            </div>
+
+            <!-- E-commerce & Retail -->
+            <div class="group bg-gradient-to-br from-purple-900/20 to-pink-900/20 backdrop-blur-xl border border-purple-400/20 rounded-2xl p-8 hover-glow hover-lift transition-all duration-500 scroll-reveal" style="animation-delay: 0.4s;">
+              <div class="flex items-center mb-6">
+                <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mr-4">
+                  <i data-lucide="shopping-cart" class="w-7 h-7 text-white"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-white">E-commerce & Retail</h3>
+              </div>
+              <ul class="space-y-3 mb-6 text-gray-300">
+                <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-purple-400 mr-3"></i>Inventory management & forecasting</li>
+                <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-purple-400 mr-3"></i>Customer service automation</li>
+                <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-purple-400 mr-3"></i>Personalized marketing campaigns</li>
+                <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-purple-400 mr-3"></i>Order processing & fulfillment</li>
+              </ul>
+              <p class="text-sm text-gray-400 mb-4">Real-time analytics • Multi-channel integration</p>
+            </div>
+
+            <!-- Manufacturing -->
+            <div class="group bg-gradient-to-br from-orange-900/20 to-red-900/20 backdrop-blur-xl border border-orange-400/20 rounded-2xl p-8 hover-glow hover-lift transition-all duration-500 scroll-reveal" style="animation-delay: 0.6s;">
+              <div class="flex items-center mb-6">
+                <div class="w-14 h-14 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center mr-4">
+                  <i data-lucide="factory" class="w-7 h-7 text-white"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-white">Manufacturing</h3>
+              </div>
+              <ul class="space-y-3 mb-6 text-gray-300">
+                <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-orange-400 mr-3"></i>Supply chain optimization</li>
+                <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-orange-400 mr-3"></i>Quality control automation</li>
+                <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-orange-400 mr-3"></i>Predictive maintenance</li>
+                <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-orange-400 mr-3"></i>Production planning & scheduling</li>
+              </ul>
+              <p class="text-sm text-gray-400 mb-4">IoT integration • Real-time monitoring</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Integrations Ecosystem Section -->
+      <section class="py-32 bg-gradient-to-br from-gray-900 via-black to-gray-900 relative overflow-hidden">
+        <div class="absolute inset-0">
+          <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full filter blur-3xl animate-float"></div>
+          <div class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-indigo-500/10 rounded-full filter blur-3xl animate-float" style="animation-delay: 5s;"></div>
+        </div>
+        
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="text-center mb-20 scroll-reveal">
+            <div class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-cyan-500/20 to-indigo-500/20 backdrop-blur-md rounded-full border border-cyan-400/30 mb-8">
+              <i data-lucide="puzzle" class="w-5 h-5 text-cyan-400 mr-3 animate-pulse"></i>
+              <span class="text-cyan-300 font-semibold text-lg">Ecosystem & Integrations</span>
+            </div>
+            <h2 class="text-5xl md:text-6xl font-black text-white mb-6">
+              Connect everything,
+              <br>
+              <span class="bg-gradient-to-r from-cyan-400 via-indigo-500 to-purple-500 bg-clip-text text-transparent animate-gradient">automate anything</span>
+            </h2>
+            <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+              3,000+ integrations, unlimited API connections, and the most comprehensive automation platform for modern businesses.
+            </p>
+          </div>
+
+          <!-- Integration Categories -->
+          <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+            <div class="group bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 text-center hover-glow hover-lift transition-all duration-500 scroll-reveal">
+              <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="mail" class="w-6 h-6 text-white"></i>
+              </div>
+              <h3 class="text-lg font-bold text-white mb-2">Communication</h3>
+              <p class="text-gray-400 text-sm mb-3">Gmail, Slack, Teams, Discord, Telegram</p>
+              <span class="text-cyan-400 font-semibold">500+ tools</span>
+            </div>
+
+            <div class="group bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 text-center hover-glow hover-lift transition-all duration-500 scroll-reveal" style="animation-delay: 0.1s;">
+              <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="users" class="w-6 h-6 text-white"></i>
+              </div>
+              <h3 class="text-lg font-bold text-white mb-2">CRM & Sales</h3>
+              <p class="text-gray-400 text-sm mb-3">Salesforce, HubSpot, Pipedrive, Airtable</p>
+              <span class="text-purple-400 font-semibold">300+ tools</span>
+            </div>
+
+            <div class="group bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 text-center hover-glow hover-lift transition-all duration-500 scroll-reveal" style="animation-delay: 0.2s;">
+              <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="trending-up" class="w-6 h-6 text-white"></i>
+              </div>
+              <h3 class="text-lg font-bold text-white mb-2">Analytics</h3>
+              <p class="text-gray-400 text-sm mb-3">Google Analytics, Mixpanel, Segment</p>
+              <span class="text-green-400 font-semibold">200+ tools</span>
+            </div>
+
+            <div class="group bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 text-center hover-glow hover-lift transition-all duration-500 scroll-reveal" style="animation-delay: 0.3s;">
+              <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="code" class="w-6 h-6 text-white"></i>
+              </div>
+              <h3 class="text-lg font-bold text-white mb-2">Development</h3>
+              <p class="text-gray-400 text-sm mb-3">GitHub, GitLab, Jira, Linear, Notion</p>
+              <span class="text-orange-400 font-semibold">400+ tools</span>
+            </div>
+          </div>
+
+          <!-- Popular Integrations Grid -->
+          <div class="bg-gradient-to-r from-white/5 via-white/10 to-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 scroll-reveal">
+            <h3 class="text-2xl font-bold text-white text-center mb-8">Most Popular Integrations</h3>
+            <div class="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-8 gap-6">
+              <div class="group flex flex-col items-center p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all duration-300 hover-lift">
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mb-2">
+                  <i data-lucide="mail" class="w-6 h-6 text-white"></i>
+                </div>
+                <span class="text-xs text-gray-300 font-medium">Gmail</span>
+              </div>
+              <div class="group flex flex-col items-center p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all duration-300 hover-lift">
+                <div class="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center mb-2">
+                  <i data-lucide="hash" class="w-6 h-6 text-white"></i>
+                </div>
+                <span class="text-xs text-gray-300 font-medium">Slack</span>
+              </div>
+              <div class="group flex flex-col items-center p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all duration-300 hover-lift">
+                <div class="w-10 h-10 bg-black rounded-lg flex items-center justify-center mb-2">
+                  <i data-lucide="notebook" class="w-6 h-6 text-white"></i>
+                </div>
+                <span class="text-xs text-gray-300 font-medium">Notion</span>
+              </div>
+              <div class="group flex flex-col items-center p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all duration-300 hover-lift">
+                <div class="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center mb-2">
+                  <i data-lucide="users" class="w-6 h-6 text-white"></i>
+                </div>
+                <span class="text-xs text-gray-300 font-medium">HubSpot</span>
+              </div>
+              <div class="group flex flex-col items-center p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all duration-300 hover-lift">
+                <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center mb-2">
+                  <i data-lucide="users" class="w-6 h-6 text-white"></i>
+                </div>
+                <span class="text-xs text-gray-300 font-medium">Salesforce</span>
+              </div>
+              <div class="group flex flex-col items-center p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all duration-300 hover-lift">
+                <div class="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center mb-2">
+                  <i data-lucide="table" class="w-6 h-6 text-white"></i>
+                </div>
+                <span class="text-xs text-gray-300 font-medium">Airtable</span>
+              </div>
+              <div class="group flex flex-col items-center p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all duration-300 hover-lift">
+                <div class="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center mb-2">
+                  <i data-lucide="play" class="w-6 h-6 text-white"></i>
+                </div>
+                <span class="text-xs text-gray-300 font-medium">YouTube</span>
+              </div>
+              <div class="group flex flex-col items-center p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all duration-300 hover-lift">
+                <div class="w-10 h-10 bg-cyan-600 rounded-lg flex items-center justify-center mb-2">
+                  <i data-lucide="zap" class="w-6 h-6 text-white"></i>
+                </div>
+                <span class="text-xs text-gray-300 font-medium">OpenAI</span>
+              </div>
+            </div>
+            <div class="text-center mt-6">
+              <a href="#" class="inline-flex items-center text-cyan-400 font-semibold hover:text-cyan-300 transition-colors">
+                <span>View all 3,000+ integrations</span>
+                <i data-lucide="arrow-right" class="w-4 h-4 ml-2"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Template Library Section -->
+      <section class="py-32 bg-gradient-to-br from-gray-900 via-black to-purple-900 relative overflow-hidden">
+        <div class="absolute inset-0">
+          <div class="absolute top-0 left-1/3 w-96 h-96 bg-purple-500/10 rounded-full filter blur-3xl animate-float"></div>
+          <div class="absolute bottom-0 right-1/3 w-80 h-80 bg-blue-500/10 rounded-full filter blur-3xl animate-float" style="animation-delay: 6s;"></div>
+        </div>
+        
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="text-center mb-20 scroll-reveal">
+            <div class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-500/20 to-blue-500/20 backdrop-blur-md rounded-full border border-purple-400/30 mb-8">
+              <i data-lucide="layers" class="w-5 h-5 text-purple-400 mr-3 animate-pulse"></i>
+              <span class="text-purple-300 font-semibold text-lg">Ready-to-Use Templates</span>
+            </div>
+            <h2 class="text-5xl md:text-6xl font-black text-white mb-6">
+              Deploy in minutes,
+              <br>
+              <span class="bg-gradient-to-r from-purple-400 via-blue-500 to-cyan-500 bg-clip-text text-transparent animate-gradient">not months</span>
+            </h2>
+            <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+              100+ pre-built workflow templates from industry experts. Copy, customize, and deploy enterprise-grade automations instantly.
+            </p>
+          </div>
+
+          <!-- Template Categories -->
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+            <!-- Sales & CRM Templates -->
+            <div class="group bg-gradient-to-br from-green-900/20 to-emerald-900/20 backdrop-blur-xl border border-green-400/20 rounded-2xl p-8 hover-glow hover-lift transition-all duration-500 scroll-reveal">
+              <div class="flex items-center mb-6">
+                <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mr-4">
+                  <i data-lucide="target" class="w-7 h-7 text-white"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white">Sales & CRM</h3>
+              </div>
+              <div class="space-y-3 mb-6">
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-gray-300">Lead Scoring & Qualification</span>
+                  <span class="text-green-400 font-semibold">12 templates</span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-gray-300">Pipeline Management</span>
+                  <span class="text-green-400 font-semibold">8 templates</span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-gray-300">Outbound Sales Automation</span>
+                  <span class="text-green-400 font-semibold">15 templates</span>
+                </div>
+              </div>
+              <p class="text-gray-400 text-sm mb-4">Automate your entire sales funnel from lead capture to deal closure with AI-powered workflows.</p>
+              <div class="flex items-center text-green-400 font-semibold group-hover:text-green-300 transition-colors">
+                <span>Browse templates</span>
+                <i data-lucide="arrow-right" class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"></i>
+              </div>
+            </div>
+
+            <!-- Marketing Templates -->
+            <div class="group bg-gradient-to-br from-purple-900/20 to-pink-900/20 backdrop-blur-xl border border-purple-400/20 rounded-2xl p-8 hover-glow hover-lift transition-all duration-500 scroll-reveal" style="animation-delay: 0.2s;">
+              <div class="flex items-center mb-6">
+                <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mr-4">
+                  <i data-lucide="megaphone" class="w-7 h-7 text-white"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white">Marketing</h3>
+              </div>
+              <div class="space-y-3 mb-6">
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-gray-300">Content Creation & Distribution</span>
+                  <span class="text-purple-400 font-semibold">18 templates</span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-gray-300">Email Marketing Automation</span>
+                  <span class="text-purple-400 font-semibold">10 templates</span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-gray-300">Social Media Management</span>
+                  <span class="text-purple-400 font-semibold">14 templates</span>
+                </div>
+              </div>
+              <p class="text-gray-400 text-sm mb-4">Scale your marketing with AI-driven content creation, audience targeting, and campaign optimization.</p>
+              <div class="flex items-center text-purple-400 font-semibold group-hover:text-purple-300 transition-colors">
+                <span>Browse templates</span>
+                <i data-lucide="arrow-right" class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"></i>
+              </div>
+            </div>
+
+            <!-- Operations Templates -->
+            <div class="group bg-gradient-to-br from-blue-900/20 to-cyan-900/20 backdrop-blur-xl border border-blue-400/20 rounded-2xl p-8 hover-glow hover-lift transition-all duration-500 scroll-reveal" style="animation-delay: 0.4s;">
+              <div class="flex items-center mb-6">
+                <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center mr-4">
+                  <i data-lucide="settings" class="w-7 h-7 text-white"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white">Operations</h3>
+              </div>
+              <div class="space-y-3 mb-6">
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-gray-300">Document Processing</span>
+                  <span class="text-blue-400 font-semibold">16 templates</span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-gray-300">Data Analysis & Reporting</span>
+                  <span class="text-blue-400 font-semibold">12 templates</span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-gray-300">Workflow Automation</span>
+                  <span class="text-blue-400 font-semibold">20 templates</span>
+                </div>
+              </div>
+              <p class="text-gray-400 text-sm mb-4">Streamline operations with intelligent document processing, data workflows, and task automation.</p>
+              <div class="flex items-center text-blue-400 font-semibold group-hover:text-blue-300 transition-colors">
+                <span>Browse templates</span>
+                <i data-lucide="arrow-right" class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Featured Templates Showcase -->
+          <div class="bg-gradient-to-r from-white/5 via-white/10 to-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 scroll-reveal">
+            <h3 class="text-2xl font-bold text-white text-center mb-8">Featured Templates</h3>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div class="bg-white/5 border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all duration-300">
+                <div class="flex items-center mb-4">
+                  <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center mr-3">
+                    <i data-lucide="user-check" class="w-5 h-5 text-white"></i>
+                  </div>
+                  <div>
+                    <h4 class="text-white font-semibold">Lead Qualification Bot</h4>
+                    <p class="text-gray-400 text-xs">Sales • Popular</p>
+                  </div>
+                </div>
+                <p class="text-gray-300 text-sm mb-3">Automatically qualify inbound leads and route them to the right sales rep based on company size, industry, and budget.</p>
+                <div class="flex items-center justify-between">
+                  <span class="text-xs text-gray-400">Used by 2,400+ teams</span>
+                  <span class="text-green-400 text-xs font-semibold">One-click deploy</span>
+                </div>
+              </div>
+
+              <div class="bg-white/5 border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all duration-300">
+                <div class="flex items-center mb-4">
+                  <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center mr-3">
+                    <i data-lucide="edit" class="w-5 h-5 text-white"></i>
+                  </div>
+                  <div>
+                    <h4 class="text-white font-semibold">Content Distribution Pipeline</h4>
+                    <p class="text-gray-400 text-xs">Marketing • Trending</p>
+                  </div>
+                </div>
+                <p class="text-gray-300 text-sm mb-3">Turn one blog post into 20+ pieces of content across LinkedIn, Twitter, newsletters, and more with AI optimization.</p>
+                <div class="flex items-center justify-between">
+                  <span class="text-xs text-gray-400">Used by 1,800+ teams</span>
+                  <span class="text-purple-400 text-xs font-semibold">One-click deploy</span>
+                </div>
+              </div>
+
+              <div class="bg-white/5 border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all duration-300">
+                <div class="flex items-center mb-4">
+                  <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center mr-3">
+                    <i data-lucide="file-text" class="w-5 h-5 text-white"></i>
+                  </div>
+                  <div>
+                    <h4 class="text-white font-semibold">Invoice Processing System</h4>
+                    <p class="text-gray-400 text-xs">Finance • New</p>
+                  </div>
+                </div>
+                <p class="text-gray-300 text-sm mb-3">Extract invoice data, validate against purchase orders, and automatically approve or flag for review with 99% accuracy.</p>
+                <div class="flex items-center justify-between">
+                  <span class="text-xs text-gray-400">Used by 950+ teams</span>
+                  <span class="text-blue-400 text-xs font-semibold">One-click deploy</span>
+                </div>
+              </div>
+            </div>
+            <div class="text-center mt-6">
+              <a href="#" class="inline-flex items-center text-purple-400 font-semibold hover:text-purple-300 transition-colors">
+                <span>Explore all 100+ templates</span>
+                <i data-lucide="arrow-right" class="w-4 h-4 ml-2"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Features Section -->
       <section id="features" class="py-20 bg-gradient-to-b from-gray-50 to-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
