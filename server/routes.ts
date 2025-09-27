@@ -1238,7 +1238,7 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
               <div class="absolute inset-0 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div class="relative z-10">
                 <div class="w-14 h-14 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-xl flex items-center justify-center mb-6">
-                  <i data-lucide="template" class="w-7 h-7 text-white"></i>
+                  <i data-lucide="layers" class="w-7 h-7 text-white"></i>
                 </div>
                 <h3 class="text-xl font-bold text-gray-900 mb-4">Ready-made Templates</h3>
                 <p class="text-gray-600">Start in seconds with 60+ pre-built workflows for sales, marketing, support, and operations.</p>
