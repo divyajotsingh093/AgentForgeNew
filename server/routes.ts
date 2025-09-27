@@ -146,6 +146,78 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
           });
         });
       });
+      
+      // Scroll-triggered animations
+      function handleScrollAnimations() {
+        const elements = document.querySelectorAll('.scroll-reveal');
+        const windowHeight = window.innerHeight;
+        
+        elements.forEach(element => {
+          const elementTop = element.getBoundingClientRect().top;
+          const elementVisible = 150;
+          
+          if (elementTop < windowHeight - elementVisible) {
+            element.classList.add('revealed');
+          }
+        });
+      }
+      
+      // Intersection Observer for better performance
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+      };
+      
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('revealed');
+          }
+        });
+      }, observerOptions);
+      
+      // Observe all scroll-reveal elements
+      document.addEventListener('DOMContentLoaded', () => {
+        const elements = document.querySelectorAll('.scroll-reveal');
+        elements.forEach(el => observer.observe(el));
+      });
+      
+      // Add scroll listener for continuous effects
+      window.addEventListener('scroll', handleScrollAnimations);
+      
+      // Initial check for elements already in view
+      handleScrollAnimations();
+      
+      // Parallax effect for floating elements
+      window.addEventListener('scroll', () => {
+        const scrolled = window.pageYOffset;
+        const parallax = document.querySelectorAll('.parallax-layer');
+        const speed = 0.5;
+        
+        parallax.forEach(element => {
+          const yPos = -(scrolled * speed);
+          element.style.transform = `translate3d(0, ${yPos}px, 0)`;
+        });
+      });
+      
+      // Add particle effects on mouse move
+      document.addEventListener('mousemove', (e) => {
+        const particles = document.querySelectorAll('.particle');
+        particles.forEach((particle, index) => {
+          const speed = (index + 1) * 0.02;
+          const x = (e.clientX * speed);
+          const y = (e.clientY * speed);
+          particle.style.transform = `translate(${x}px, ${y}px)`;
+        });
+      });
+      
+      // Add loading animations on page load
+      window.addEventListener('load', () => {
+        // Trigger initial animations
+        setTimeout(() => {
+          document.body.classList.add('loaded');
+        }, 100);
+      });
     </script>
 </body>
 </html>`;
@@ -378,14 +450,118 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
         </div>
       </section>
 
-      <!-- Stats Section -->
-      <section class="py-20 bg-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="text-center mb-16">
-            <div class="inline-flex items-center px-4 py-2 bg-green-50 rounded-full border border-green-200 mb-6">
-              <i data-lucide="trending-up" class="w-4 h-4 text-green-600 mr-2"></i>
-              <span class="text-green-700 text-sm font-semibold">Join 10,000+ teams building with AI</span>
+      <!-- Features Section with Scroll Animations -->
+      <section class="py-32 bg-gradient-to-br from-gray-900 via-black to-gray-900 relative overflow-hidden">
+        <!-- Animated background elements -->
+        <div class="absolute inset-0">
+          <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full filter blur-3xl animate-float"></div>
+          <div class="absolute bottom-0 right-1/4 w-80 h-80 bg-purple-500/10 rounded-full filter blur-3xl animate-float" style="animation-delay: 3s;"></div>
+        </div>
+        
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="text-center mb-20 scroll-reveal">
+            <div class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-md rounded-full border border-blue-400/30 mb-8">
+              <i data-lucide="zap" class="w-5 h-5 text-blue-400 mr-3 animate-pulse"></i>
+              <span class="text-blue-300 font-semibold text-lg">Powerful Features</span>
             </div>
+            <h2 class="text-5xl md:text-6xl font-black text-white mb-6">
+              Everything you need to build
+              <br>
+              <span class="bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient">intelligent workflows</span>
+            </h2>
+            <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+              From simple automations to complex multi-agent systems, AgentFlow provides the tools to bring your AI vision to life.
+            </p>
+          </div>
+          
+          <!-- Interactive Feature Grid -->
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
+            <div class="group bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 hover-3d hover-glow transition-all duration-500 scroll-reveal">
+              <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <i data-lucide="workflow" class="w-8 h-8 text-white"></i>
+              </div>
+              <h3 class="text-2xl font-bold text-white mb-4">Visual Flow Builder</h3>
+              <p class="text-gray-300 mb-6">Drag and drop to create complex AI workflows. No coding required - just connect, configure, and deploy.</p>
+              <div class="flex items-center text-blue-400 font-semibold group-hover:text-blue-300 transition-colors">
+                <span>Learn more</span>
+                <i data-lucide="arrow-right" class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"></i>
+              </div>
+            </div>
+            
+            <div class="group bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 hover-3d hover-glow transition-all duration-500 scroll-reveal" style="animation-delay: 0.2s;">
+              <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <i data-lucide="brain-circuit" class="w-8 h-8 text-white"></i>
+              </div>
+              <h3 class="text-2xl font-bold text-white mb-4">AI Agent Orchestration</h3>
+              <p class="text-gray-300 mb-6">Coordinate multiple AI agents working together. Each agent specializes in specific tasks for optimal results.</p>
+              <div class="flex items-center text-purple-400 font-semibold group-hover:text-purple-300 transition-colors">
+                <span>Learn more</span>
+                <i data-lucide="arrow-right" class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"></i>
+              </div>
+            </div>
+            
+            <div class="group bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 hover-3d hover-glow transition-all duration-500 scroll-reveal" style="animation-delay: 0.4s;">
+              <div class="w-16 h-16 bg-gradient-to-br from-pink-500 to-red-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <i data-lucide="database" class="w-8 h-8 text-white"></i>
+              </div>
+              <h3 class="text-2xl font-bold text-white mb-4">Knowledge Integration</h3>
+              <p class="text-gray-300 mb-6">Upload documents, connect databases, and integrate with your existing tools for comprehensive AI workflows.</p>
+              <div class="flex items-center text-pink-400 font-semibold group-hover:text-pink-300 transition-colors">
+                <span>Learn more</span>
+                <i data-lucide="arrow-right" class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"></i>
+              </div>
+            </div>
+            
+            <div class="group bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 hover-3d hover-glow transition-all duration-500 scroll-reveal" style="animation-delay: 0.6s;">
+              <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <i data-lucide="activity" class="w-8 h-8 text-white"></i>
+              </div>
+              <h3 class="text-2xl font-bold text-white mb-4">Real-time Monitoring</h3>
+              <p class="text-gray-300 mb-6">Track your workflows in real-time with detailed logging, performance metrics, and error tracking.</p>
+              <div class="flex items-center text-green-400 font-semibold group-hover:text-green-300 transition-colors">
+                <span>Learn more</span>
+                <i data-lucide="arrow-right" class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"></i>
+              </div>
+            </div>
+            
+            <div class="group bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 hover-3d hover-glow transition-all duration-500 scroll-reveal" style="animation-delay: 0.8s;">
+              <div class="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <i data-lucide="plug" class="w-8 h-8 text-white"></i>
+              </div>
+              <h3 class="text-2xl font-bold text-white mb-4">Tool Integrations</h3>
+              <p class="text-gray-300 mb-6">Connect with 100+ tools including Slack, Notion, GitHub, and custom APIs for seamless automation.</p>
+              <div class="flex items-center text-orange-400 font-semibold group-hover:text-orange-300 transition-colors">
+                <span>Learn more</span>
+                <i data-lucide="arrow-right" class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"></i>
+              </div>
+            </div>
+            
+            <div class="group bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 hover-3d hover-glow transition-all duration-500 scroll-reveal" style="animation-delay: 1s;">
+              <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <i data-lucide="shield-check" class="w-8 h-8 text-white"></i>
+              </div>
+              <h3 class="text-2xl font-bold text-white mb-4">Enterprise Security</h3>
+              <p class="text-gray-300 mb-6">Bank-level security with encryption, audit logs, and compliance features for enterprise workflows.</p>
+              <div class="flex items-center text-indigo-400 font-semibold group-hover:text-indigo-300 transition-colors">
+                <span>Learn more</span>
+                <i data-lucide="arrow-right" class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Stats Section -->
+      <section class="py-20 bg-gradient-to-br from-black via-gray-900 to-black">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="text-center mb-16 scroll-reveal">
+            <div class="inline-flex items-center px-6 py-3 bg-green-500/20 backdrop-blur-md rounded-full border border-green-400/30 mb-8">
+              <i data-lucide="trending-up" class="w-5 h-5 text-green-400 mr-3 animate-pulse"></i>
+              <span class="text-green-300 font-semibold text-lg">Join the AI Revolution</span>
+            </div>
+            <h2 class="text-4xl md:text-5xl font-black text-white mb-8">
+              Trusted by <span class="bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent">10,000+ teams</span>
+            </h2>
           </div>
           
           <div class="grid md:grid-cols-4 gap-8 mb-20">
