@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 // Dummy user data for development
 const DUMMY_USER = {
@@ -14,7 +14,18 @@ const DUMMY_USER = {
 // Dummy token for API calls
 const DUMMY_TOKEN = "dummy_jwt_token_for_development";
 
-export function useAuth() {
+interface AuthContextType {
+  user: typeof DUMMY_USER | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  login: () => Promise<void>;
+  logout: () => void;
+  getAccessToken: () => Promise<string>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [user, setUser] = useState<typeof DUMMY_USER | null>(null);
@@ -23,13 +34,27 @@ export function useAuth() {
     // Check if user was previously authenticated
     const wasAuthenticated = localStorage.getItem('vortic_auth') === 'true';
     
-    setTimeout(() => {
-      if (wasAuthenticated) {
-        setIsAuthenticated(true);
-        setUser(DUMMY_USER);
-      }
+    if (wasAuthenticated) {
+      // Verify with backend
+      fetch('/api/auth/me')
+        .then(async (res) => {
+          if (res.ok) {
+            const data = await res.json();
+            setIsAuthenticated(true);
+            setUser(data);
+          } else {
+            localStorage.removeItem('vortic_auth');
+          }
+        })
+        .catch(() => {
+          localStorage.removeItem('vortic_auth');
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    } else {
       setIsLoading(false);
-    }, 100);
+    }
   }, []);
 
   const login = async () => {
@@ -60,7 +85,6 @@ export function useAuth() {
   const getAccessToken = async () => {
     if (!isAuthenticated) {
       console.log('⚠️ Auth not ready yet, waiting...');
-      // Wait a bit for auth to complete if it's still loading
       if (isLoading) {
         await new Promise(resolve => setTimeout(resolve, 200));
       }
@@ -71,12 +95,17 @@ export function useAuth() {
     return DUMMY_TOKEN;
   };
 
-  return {
-    user,
-    isLoading,
-    isAuthenticated,
-    login,
-    logout,
-    getAccessToken,
-  };
+  return (
+    <AuthContext.Provider value={{ user, isLoading, isAuthenticated, login, logout, getAccessToken }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 }
