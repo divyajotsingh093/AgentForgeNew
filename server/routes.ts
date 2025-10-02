@@ -1952,6 +1952,54 @@ Sitemap: https://agentflow.replit.app/sitemap.xml`);
     }
   });
 
+  // User management routes (admin)
+  app.get('/api/admin/users/pending', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.id);
+      if (!currentUser?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const users = await storage.getPendingUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching pending users:", error);
+      res.status(500).json({ message: "Failed to fetch pending users" });
+    }
+  });
+
+  app.post('/api/admin/users/:userId/approve', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.id);
+      if (!currentUser?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const userId = req.params.userId;
+      const user = await storage.approveUser(userId, req.user.id);
+      res.json(user);
+    } catch (error) {
+      console.error("Error approving user:", error);
+      res.status(500).json({ message: "Failed to approve user" });
+    }
+  });
+
+  app.post('/api/admin/users/:userId/reject', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUser = await storage.getUser(req.user.id);
+      if (!currentUser?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const userId = req.params.userId;
+      await storage.deleteUser(userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error rejecting user:", error);
+      res.status(500).json({ message: "Failed to reject user" });
+    }
+  });
+
   // Project routes
   app.get('/api/projects', isAuthenticated, async (req: any, res) => {
     try {

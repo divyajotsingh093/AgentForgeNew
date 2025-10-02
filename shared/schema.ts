@@ -32,6 +32,10 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  isApproved: boolean("is_approved").default(false),
+  isAdmin: boolean("is_admin").default(false),
+  approvedAt: timestamp("approved_at"),
+  approvedBy: varchar("approved_by"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

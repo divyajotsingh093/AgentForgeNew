@@ -25,6 +25,9 @@ export interface IStorage {
   // User operations (required for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  getPendingUsers(): Promise<User[]>;
+  approveUser(userId: string, approvedBy: string): Promise<User>;
+  deleteUser(userId: string): Promise<void>;
   
   // Project operations
   getProjects(userId: string): Promise<Project[]>;
