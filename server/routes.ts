@@ -326,8 +326,8 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
             </nav>
             
             <div class="flex items-center space-x-4 animate-slide-up" style="animation-delay: 0.2s;">
-              <a href="/api/auth/login" class="text-white/80 hover:text-white transition-all duration-300 font-medium">Sign In</a>
-              <a href="/api/auth/login?screen_hint=signup" class="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white px-6 py-2.5 rounded-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 font-semibold animate-gradient">Get Started Free</a>
+              <a href="/app" class="text-white/80 hover:text-white transition-all duration-300 font-medium">Sign In</a>
+              <a href="/app" class="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white px-6 py-2.5 rounded-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 font-semibold animate-gradient">Get Started Free</a>
             </div>
           </div>
         </div>
@@ -380,7 +380,7 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
           
           <!-- Interactive CTA buttons -->
           <div class="flex flex-col sm:flex-row gap-8 justify-center mb-20 animate-zoom-in" style="animation-delay: 1s;">
-            <a href="/api/auth/login?screen_hint=signup" class="group relative bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white px-12 py-6 rounded-2xl text-xl font-bold hover:shadow-2xl hover:scale-110 transition-all duration-500 transform hover-3d overflow-hidden">
+            <a href="/app" class="group relative bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white px-12 py-6 rounded-2xl text-xl font-bold hover:shadow-2xl hover:scale-110 transition-all duration-500 transform hover-3d overflow-hidden">
               <div class="absolute inset-0 bg-gradient-to-r from-blue-700 via-purple-700 to-pink-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <span class="relative z-10 flex items-center justify-center">
                 <i data-lucide="rocket" class="w-6 h-6 mr-3 animate-bounce"></i>
@@ -1252,7 +1252,7 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
             <div class="relative z-10">
               <h2 class="text-3xl md:text-4xl font-bold mb-6">See Vortic in Action</h2>
               <p class="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">Watch how Fortune 500 companies are using Vortic to automate their most complex workflows</p>
-              <a href="/api/auth/login?screen_hint=signup" class="inline-flex items-center bg-white text-gray-900 px-8 py-4 rounded-xl text-lg font-semibold hover:bg-gray-100 transition-colors">
+              <a href="/app" class="inline-flex items-center bg-white text-gray-900 px-8 py-4 rounded-xl text-lg font-semibold hover:bg-gray-100 transition-colors">
                 <i data-lucide="play" class="w-5 h-5 mr-2"></i>
                 Try Vortic Now
               </a>
@@ -1373,7 +1373,7 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
           </p>
           
           <div class="flex flex-col sm:flex-row gap-6 justify-center mb-12">
-            <a href="/api/auth/login?screen_hint=signup" class="group bg-white text-gray-900 px-10 py-5 rounded-xl text-lg font-bold hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-xl">
+            <a href="/app" class="group bg-white text-gray-900 px-10 py-5 rounded-xl text-lg font-bold hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-xl">
               <span class="flex items-center justify-center">
                 <i data-lucide="rocket" class="w-6 h-6 mr-2"></i>
                 Start Building for Free
@@ -1527,8 +1527,8 @@ Sitemap: https://vortic.replit.app/sitemap.xml`);
             </nav>
             
             <div class="flex items-center space-x-4">
-              <a href="/api/auth/login" class="text-muted-foreground hover:text-foreground transition-colors">Sign In</a>
-              <a href="/api/auth/login?screen_hint=signup" class="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors">Get Started</a>
+              <a href="/app" class="text-muted-foreground hover:text-foreground transition-colors">Sign In</a>
+              <a href="/app" class="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors">Get Started</a>
             </div>
           </div>
         </div>
@@ -1577,7 +1577,7 @@ Sitemap: https://vortic.replit.app/sitemap.xml`);
                   Community support
                 </li>
               </ul>
-              <a href="/api/auth/login?screen_hint=signup" class="w-full bg-secondary text-secondary-foreground py-3 rounded-lg font-semibold hover:bg-secondary/90 transition-colors block text-center">
+              <a href="/app" class="w-full bg-secondary text-secondary-foreground py-3 rounded-lg font-semibold hover:bg-secondary/90 transition-colors block text-center">
                 Get Started Free
               </a>
             </div>
@@ -1620,7 +1620,7 @@ Sitemap: https://vortic.replit.app/sitemap.xml`);
                   Priority support
                 </li>
               </ul>
-              <a href="/api/auth/login?screen_hint=signup" class="w-full bg-primary text-primary-foreground py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors block text-center">
+              <a href="/app" class="w-full bg-primary text-primary-foreground py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors block text-center">
                 Start Pro Trial
               </a>
             </div>
@@ -1770,8 +1770,8 @@ Sitemap: https://vortic.replit.app/sitemap.xml`);
             </nav>
             
             <div class="flex items-center space-x-4">
-              <a href="/api/auth/login" class="text-muted-foreground hover:text-foreground transition-colors">Sign In</a>
-              <a href="/api/auth/login?screen_hint=signup" class="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors">Get Started</a>
+              <a href="/app" class="text-muted-foreground hover:text-foreground transition-colors">Sign In</a>
+              <a href="/app" class="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors">Get Started</a>
             </div>
           </div>
         </div>
@@ -1813,7 +1813,7 @@ Sitemap: https://vortic.replit.app/sitemap.xml`);
                   <div>
                     <h3 class="text-xl font-semibold mb-2">Live Chat</h3>
                     <p class="text-muted-foreground mb-2">Chat with our team in real-time</p>
-                    <a href="/api/auth/login" class="text-primary hover:underline">Available in-app</a>
+                    <a href="/app" class="text-primary hover:underline">Available in-app</a>
                   </div>
                 </div>
                 
