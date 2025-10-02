@@ -1,6 +1,7 @@
 import { useLocation, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
+import Logo from "@/components/ui/logo";
 
 interface SidebarProps {
   onClose?: () => void;
@@ -48,10 +49,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
       {/* Logo & Brand */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <i className="fas fa-robot text-primary-foreground text-sm"></i>
-          </div>
-          <span className="font-bold text-lg">AgentFlow</span>
+          <Logo size="md" />
+          <span className="font-bold text-lg bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">AgentFlow</span>
         </div>
       </div>
 
