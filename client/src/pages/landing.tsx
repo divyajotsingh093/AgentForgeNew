@@ -1,24 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useAuth } from "@/hooks/useAuth";
 import Logo from "@/components/ui/logo";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 
 export default function Landing() {
-  const { login, isAuthenticated } = useAuth();
   const [isVisible, setIsVisible] = useState(false);
   const [, setLocation] = useLocation();
 
   useEffect(() => {
     setIsVisible(true);
   }, []);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      setLocation("/");
-    }
-  }, [isAuthenticated, setLocation]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-black text-white">
@@ -39,11 +31,7 @@ export default function Landing() {
               </span>
             </div>
             <Button 
-              onClick={async () => {
-                console.log('Sign In button clicked');
-                await login();
-                console.log('Login completed');
-              }}
+              onClick={() => setLocation("/auth")}
               className="bg-gradient-to-r from-primary to-secondary text-black hover:shadow-lg hover:shadow-primary/50 transition-all duration-300 hover:scale-105"
               data-testid="button-login"
             >
@@ -78,11 +66,7 @@ export default function Landing() {
             <div className="flex items-center justify-center gap-6 flex-wrap">
               <Button 
                 size="lg"
-                onClick={async () => {
-                  console.log('Get Started button clicked');
-                  await login();
-                  console.log('Login completed');
-                }}
+                onClick={() => setLocation("/auth")}
                 className="group bg-gradient-to-r from-primary to-secondary text-black px-10 py-6 text-lg hover:shadow-2xl hover:shadow-primary/50 transition-all duration-300 hover:scale-105 font-semibold"
                 data-testid="button-get-started"
               >

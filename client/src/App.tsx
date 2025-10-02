@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import Landing from "@/pages/landing";
+import Auth from "@/pages/auth";
 import Dashboard from "@/pages/dashboard";
 import FlowBuilder from "@/pages/flow-builder";
 import Flows from "@/pages/flows";
@@ -33,7 +34,10 @@ function AppRouter() {
     <Router base="/app">
       <Switch>
         {isLoading || !isAuthenticated ? (
-          <Route path="/" component={Landing} />
+          <>
+            <Route path="/" component={Landing} />
+            <Route path="/auth" component={Auth} />
+          </>
         ) : (
           <>
             <Route path="/" component={Dashboard} />
