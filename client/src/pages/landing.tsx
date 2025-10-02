@@ -3,14 +3,22 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import Logo from "@/components/ui/logo";
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 
 export default function Landing() {
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const [isVisible, setIsVisible] = useState(false);
+  const [, setLocation] = useLocation();
 
   useEffect(() => {
     setIsVisible(true);
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      setLocation("/");
+    }
+  }, [isAuthenticated, setLocation]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-950 to-black text-white">
