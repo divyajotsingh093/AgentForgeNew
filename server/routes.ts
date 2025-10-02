@@ -1934,12 +1934,6 @@ Sitemap: https://vortic.replit.app/sitemap.xml`);
     ));
   });
 
-  // Serve SPA for /app routes
-  app.get('/app*', (req: any, res) => {
-    // This will be handled by the Vite middleware to serve the React SPA
-    res.redirect('/app');
-  });
-
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
