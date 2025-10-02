@@ -58,21 +58,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async () => {
+    console.log('Login function called');
     setIsLoading(true);
     try {
+      console.log('Fetching /api/auth/login...');
       const response = await fetch('/api/auth/login');
+      console.log('Response received:', response.status, response.ok);
       if (response.ok) {
         const data = await response.json();
+        console.log('Login successful, user data:', data.user);
         setIsAuthenticated(true);
         setUser(data.user);
         localStorage.setItem('vortic_auth', 'true');
+        console.log('Auth state updated, isAuthenticated should now be true');
       } else {
-        console.error('Login failed');
+        console.error('Login failed with status:', response.status);
       }
     } catch (error) {
       console.error('Login error:', error);
     } finally {
       setIsLoading(false);
+      console.log('Login function completed, isLoading set to false');
     }
   };
 

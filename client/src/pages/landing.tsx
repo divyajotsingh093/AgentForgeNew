@@ -39,7 +39,11 @@ export default function Landing() {
               </span>
             </div>
             <Button 
-              onClick={() => login()}
+              onClick={async () => {
+                console.log('Sign In button clicked');
+                await login();
+                console.log('Login completed');
+              }}
               className="bg-gradient-to-r from-primary to-secondary text-black hover:shadow-lg hover:shadow-primary/50 transition-all duration-300 hover:scale-105"
               data-testid="button-login"
             >
@@ -74,7 +78,11 @@ export default function Landing() {
             <div className="flex items-center justify-center gap-6 flex-wrap">
               <Button 
                 size="lg"
-                onClick={() => login()}
+                onClick={async () => {
+                  console.log('Get Started button clicked');
+                  await login();
+                  console.log('Login completed');
+                }}
                 className="group bg-gradient-to-r from-primary to-secondary text-black px-10 py-6 text-lg hover:shadow-2xl hover:shadow-primary/50 transition-all duration-300 hover:scale-105 font-semibold"
                 data-testid="button-get-started"
               >
