@@ -50,7 +50,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
       <div className="p-4 border-b border-border">
         <div className="flex items-center gap-3">
           <Logo size="md" />
-          <span className="font-bold text-lg bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">AgentFlow</span>
+          <span className="font-bold text-lg bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Vortic</span>
         </div>
       </div>
 

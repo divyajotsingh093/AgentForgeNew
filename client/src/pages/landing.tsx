@@ -27,7 +27,7 @@ export default function Landing() {
             <div className="flex items-center gap-3 group cursor-pointer">
               <Logo size="md" className="transition-transform duration-300 group-hover:scale-110" />
               <span className="font-bold text-xl bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent animate-gradient">
-                AgentFlow
+                Vortic
               </span>
             </div>
             <Button 

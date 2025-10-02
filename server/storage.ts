@@ -209,6 +209,28 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getPendingUsers(): Promise<User[]> {
+    return await db.select().from(users).where(eq(users.isApproved, false)).orderBy(desc(users.createdAt));
+  }
+
+  async approveUser(userId: string, approvedBy: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({
+        isApproved: true,
+        approvedAt: new Date(),
+        approvedBy,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async deleteUser(userId: string): Promise<void> {
+    await db.delete(users).where(eq(users.id, userId));
+  }
+
   // Project operations
   async getProjects(userId: string): Promise<Project[]> {
     return await db.select().from(projects).where(eq(projects.userId, userId)).orderBy(desc(projects.updatedAt));

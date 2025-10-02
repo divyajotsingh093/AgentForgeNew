@@ -13,59 +13,66 @@ export default function Logo({ size = "md", className = "" }: { size?: "sm" | "m
         xmlns="http://www.w3.org/2000/svg"
         className="w-full h-full"
       >
-        {/* Outer circle with gradient */}
-        <circle cx="50" cy="50" r="45" className="fill-primary/20" />
+        {/* Vortex spiral design */}
+        <defs>
+          <linearGradient id="vortexGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" className="text-primary" stopColor="currentColor" />
+            <stop offset="100%" className="text-secondary" stopColor="currentColor" />
+          </linearGradient>
+        </defs>
         
-        {/* Flow lines representing agent workflow */}
+        {/* Outer spiral arc 1 */}
         <path
-          d="M20 35 L35 35 L45 50 L35 65 L20 65"
+          d="M50 5 A45 45 0 0 1 95 50"
           className="stroke-primary"
-          strokeWidth="4"
+          strokeWidth="6"
           strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        />
-        <path
-          d="M55 50 L65 35 L80 35"
-          className="stroke-primary"
-          strokeWidth="4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        />
-        <path
-          d="M55 50 L65 65 L80 65"
-          className="stroke-primary"
-          strokeWidth="4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
           fill="none"
         />
         
-        {/* Central node */}
-        <circle cx="50" cy="50" r="8" className="fill-primary" />
+        {/* Outer spiral arc 2 */}
+        <path
+          d="M95 50 A45 45 0 0 1 50 95"
+          className="stroke-secondary"
+          strokeWidth="5"
+          strokeLinecap="round"
+          fill="none"
+        />
         
-        {/* Connection nodes */}
-        <circle cx="27.5" cy="35" r="4" className="fill-primary" />
-        <circle cx="27.5" cy="65" r="4" className="fill-primary" />
-        <circle cx="72.5" cy="35" r="4" className="fill-primary" />
-        <circle cx="72.5" cy="65" r="4" className="fill-primary" />
+        {/* Middle spiral */}
+        <path
+          d="M50 20 A30 30 0 0 1 80 50 A30 30 0 0 1 50 80"
+          className="stroke-primary"
+          strokeWidth="4"
+          strokeLinecap="round"
+          fill="none"
+        />
         
-        {/* Animated pulse effect */}
-        <circle cx="50" cy="50" r="8" className="fill-primary opacity-50">
-          <animate
-            attributeName="r"
-            values="8;12;8"
-            dur="2s"
-            repeatCount="indefinite"
-          />
-          <animate
-            attributeName="opacity"
-            values="0.5;0.1;0.5"
-            dur="2s"
-            repeatCount="indefinite"
-          />
-        </circle>
+        {/* Inner spiral */}
+        <path
+          d="M50 35 A15 15 0 0 1 65 50 A15 15 0 0 1 50 65 A15 15 0 0 1 35 50"
+          className="stroke-secondary"
+          strokeWidth="3"
+          strokeLinecap="round"
+          fill="none"
+        />
+        
+        {/* Central core with gradient */}
+        <circle cx="50" cy="50" r="8" fill="url(#vortexGradient)" />
+        
+        {/* Animated rotating effect */}
+        <g style={{ transformOrigin: '50px 50px' }}>
+          <circle cx="50" cy="50" r="20" className="stroke-primary opacity-30" strokeWidth="2" fill="none">
+            <animateTransform
+              attributeName="transform"
+              type="rotate"
+              from="0 50 50"
+              to="360 50 50"
+              dur="3s"
+              repeatCount="indefinite"
+            />
+          </circle>
+        </g>
       </svg>
     </div>
   );

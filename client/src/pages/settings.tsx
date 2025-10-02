@@ -17,8 +17,8 @@ export default function Settings() {
   
   const [profileSettings, setProfileSettings] = useState({
     name: "Demo User",
-    email: "demo@agentflow.com",
-    organization: "AgentFlow Demo",
+    email: "demo@vortic.com",
+    organization: "Vortic Demo",
     timezone: "UTC",
     language: "en",
   });

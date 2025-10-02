@@ -54,23 +54,23 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${title} | AgentFlow - No-Code AI Agent Builder</title>
+    <title>${title} | Vortic - No-Code AI Agent Builder</title>
     <meta name="description" content="${description}">
     <meta name="keywords" content="AI agent builder, no-code, automation, workflow, LangGraph, multi-agent">
     ${canonical ? `<link rel="canonical" href="${canonical}">` : ''}
     
     <!-- Open Graph -->
-    <meta property="og:title" content="${title} | AgentFlow">
+    <meta property="og:title" content="${title} | Vortic">
     <meta property="og:description" content="${description}">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://agentflow.replit.app${canonical || ''}">
-    <meta property="og:image" content="https://agentflow.replit.app/og-image.png">
+    <meta property="og:url" content="https://vortic.replit.app${canonical || ''}">
+    <meta property="og:image" content="https://vortic.replit.app/og-image.png">
     
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="${title} | AgentFlow">
+    <meta name="twitter:title" content="${title} | Vortic">
     <meta name="twitter:description" content="${description}">
-    <meta name="twitter:image" content="https://agentflow.replit.app/og-image.png">
+    <meta name="twitter:image" content="https://vortic.replit.app/og-image.png">
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
@@ -122,10 +122,10 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
     {
       "@context": "https://schema.org",
       "@type": "Organization",
-      "name": "AgentFlow",
+      "name": "Vortic",
       "description": "No-code AI agent builder platform with LangGraph execution engine",
-      "url": "https://agentflow.replit.app",
-      "logo": "https://agentflow.replit.app/logo.png",
+      "url": "https://vortic.replit.app",
+      "logo": "https://vortic.replit.app/logo.png",
       "sameAs": []
     }
     </script>
@@ -315,7 +315,7 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
               <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center animate-pulse-glow">
                 <i data-lucide="zap" class="w-5 h-5 text-white"></i>
               </div>
-              <span class="text-xl font-bold bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient">AgentFlow</span>
+              <span class="text-xl font-bold bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient">Vortic</span>
             </div>
             
             <nav class="hidden md:flex items-center space-x-8">
@@ -404,7 +404,7 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
                   <div class="w-4 h-4 bg-green-500 rounded-full animate-pulse" style="animation-delay: 0.4s;"></div>
                 </div>
                 <div class="flex-1 text-center">
-                  <span class="text-white font-bold text-lg">AgentFlow Visual Builder</span>
+                  <span class="text-white font-bold text-lg">Vortic Visual Builder</span>
                 </div>
               </div>
               <div class="p-12 min-h-96 bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-pink-900/20 relative overflow-hidden">
@@ -470,7 +470,7 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
               <span class="bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient">intelligent workflows</span>
             </h2>
             <p class="text-xl text-gray-300 max-w-3xl mx-auto">
-              From simple automations to complex multi-agent systems, AgentFlow provides the tools to bring your AI vision to life.
+              From simple automations to complex multi-agent systems, Vortic provides the tools to bring your AI vision to life.
             </p>
           </div>
           
@@ -606,7 +606,7 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
               <span class="bg-gradient-to-r from-green-400 via-blue-400 to-purple-400 bg-clip-text text-transparent animate-gradient">real results</span>
             </h2>
             <p class="text-xl text-gray-300 max-w-3xl mx-auto">
-              See how companies are saving 10-40 hours per week and reducing operational costs by 60% with AgentFlow.
+              See how companies are saving 10-40 hours per week and reducing operational costs by 60% with Vortic.
             </p>
           </div>
           
@@ -787,7 +787,7 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
               <span class="bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-gradient">every industry</span>
             </h2>
             <p class="text-xl text-gray-300 max-w-3xl mx-auto">
-              From Fortune 500 financial institutions to cutting-edge startups, AgentFlow adapts to your industry's unique requirements.
+              From Fortune 500 financial institutions to cutting-edge startups, Vortic adapts to your industry's unique requirements.
             </p>
           </div>
 
@@ -1173,7 +1173,7 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
           <div class="text-center mb-16">
             <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Your AI Workforce, Simplified</h2>
             <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-              From simple automations to complex multi-agent orchestrations, AgentFlow makes AI accessible to everyone.
+              From simple automations to complex multi-agent orchestrations, Vortic makes AI accessible to everyone.
             </p>
           </div>
           
@@ -1250,11 +1250,11 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
           <div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-12 text-center text-white relative overflow-hidden" id="demo">
             <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%239C92AC" fill-opacity="0.1"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
             <div class="relative z-10">
-              <h2 class="text-3xl md:text-4xl font-bold mb-6">See AgentFlow in Action</h2>
-              <p class="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">Watch how Fortune 500 companies are using AgentFlow to automate their most complex workflows</p>
+              <h2 class="text-3xl md:text-4xl font-bold mb-6">See Vortic in Action</h2>
+              <p class="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">Watch how Fortune 500 companies are using Vortic to automate their most complex workflows</p>
               <a href="/api/auth/login?screen_hint=signup" class="inline-flex items-center bg-white text-gray-900 px-8 py-4 rounded-xl text-lg font-semibold hover:bg-gray-100 transition-colors">
                 <i data-lucide="play" class="w-5 h-5 mr-2"></i>
-                Try AgentFlow Now
+                Try Vortic Now
               </a>
             </div>
           </div>
@@ -1266,7 +1266,7 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div class="text-center mb-16">
             <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Trusted by Forward-Thinking Teams</h2>
-            <p class="text-xl text-gray-600">Join thousands of companies automating their workflows with AgentFlow</p>
+            <p class="text-xl text-gray-600">Join thousands of companies automating their workflows with Vortic</p>
           </div>
           
           <!-- Customer logos -->
@@ -1303,7 +1303,7 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
                   <i data-lucide="star" class="w-5 h-5 fill-current"></i>
                 </div>
               </div>
-              <p class="text-gray-700 mb-6">"AgentFlow saved our team 30+ hours per week. The visual builder made it incredibly easy to automate our customer onboarding process."</p>
+              <p class="text-gray-700 mb-6">"Vortic saved our team 30+ hours per week. The visual builder made it incredibly easy to automate our customer onboarding process."</p>
               <div class="flex items-center">
                 <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center mr-4">
                   <span class="text-white font-semibold">SK</span>
@@ -1368,7 +1368,7 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
         <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
           <h2 class="text-4xl md:text-5xl font-bold mb-6">Ready to Build Your AI Workforce?</h2>
           <p class="text-xl md:text-2xl text-gray-300 mb-10 leading-relaxed">
-            Join thousands of teams using AgentFlow to automate workflows,<br class="hidden md:block">
+            Join thousands of teams using Vortic to automate workflows,<br class="hidden md:block">
             boost productivity, and focus on what matters most.
           </p>
           
@@ -1410,7 +1410,7 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
                 <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                   <i data-lucide="zap" class="w-5 h-5 text-white"></i>
                 </div>
-                <span class="text-xl font-bold text-primary">AgentFlow</span>
+                <span class="text-xl font-bold text-primary">Vortic</span>
               </div>
               <p class="text-muted-foreground">
                 The no-code AI agent builder platform that makes automation accessible to everyone.
@@ -1448,7 +1448,7 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
           </div>
           
           <div class="border-t border-border mt-12 pt-8 text-center text-muted-foreground">
-            <p>&copy; 2024 AgentFlow. All rights reserved.</p>
+            <p>&copy; 2024 Vortic. All rights reserved.</p>
           </div>
         </div>
       </footer>
@@ -1456,7 +1456,7 @@ export async function registerRoutes(app: Express, server?: Server): Promise<Ser
     
     res.send(marketingHTML(
       'Home', 
-      'Build powerful AI agents without code. AgentFlow is the comprehensive no-code platform for creating, orchestrating, and deploying multi-agent AI workflows.',
+      'Build powerful AI agents without code. Vortic is the comprehensive no-code platform for creating, orchestrating, and deploying multi-agent AI workflows.',
       content,
       '/'
     ));
@@ -1470,7 +1470,7 @@ Allow: /
 Disallow: /app/
 Disallow: /api/
 
-Sitemap: https://agentflow.replit.app/sitemap.xml`);
+Sitemap: https://vortic.replit.app/sitemap.xml`);
   });
 
   app.get('/sitemap.xml', (req, res) => {
@@ -1478,27 +1478,27 @@ Sitemap: https://agentflow.replit.app/sitemap.xml`);
     res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://agentflow.replit.app/</loc>
+    <loc>https://vortic.replit.app/</loc>
     <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://agentflow.replit.app/features</loc>
+    <loc>https://vortic.replit.app/features</loc>
     <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://agentflow.replit.app/pricing</loc>
+    <loc>https://vortic.replit.app/pricing</loc>
     <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://agentflow.replit.app/about</loc>
+    <loc>https://vortic.replit.app/about</loc>
     <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://agentflow.replit.app/contact</loc>
+    <loc>https://vortic.replit.app/contact</loc>
     <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
     <priority>0.6</priority>
   </url>
@@ -1516,7 +1516,7 @@ Sitemap: https://agentflow.replit.app/sitemap.xml`);
               <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <i data-lucide="zap" class="w-5 h-5 text-white"></i>
               </div>
-              <span class="text-xl font-bold text-primary">AgentFlow</span>
+              <span class="text-xl font-bold text-primary">Vortic</span>
             </div>
             
             <nav class="hidden md:flex items-center space-x-8">
@@ -1696,7 +1696,7 @@ Sitemap: https://agentflow.replit.app/sitemap.xml`);
                 <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                   <i data-lucide="zap" class="w-5 h-5 text-white"></i>
                 </div>
-                <span class="text-xl font-bold text-primary">AgentFlow</span>
+                <span class="text-xl font-bold text-primary">Vortic</span>
               </div>
               <p class="text-muted-foreground">
                 The no-code AI agent builder platform that makes automation accessible to everyone.
@@ -1734,7 +1734,7 @@ Sitemap: https://agentflow.replit.app/sitemap.xml`);
           </div>
           
           <div class="border-t border-border mt-12 pt-8 text-center text-muted-foreground">
-            <p>&copy; 2024 AgentFlow. All rights reserved.</p>
+            <p>&copy; 2024 Vortic. All rights reserved.</p>
           </div>
         </div>
       </footer>
@@ -1742,7 +1742,7 @@ Sitemap: https://agentflow.replit.app/sitemap.xml`);
     
     res.send(marketingHTML(
       'Pricing', 
-      'Simple, transparent pricing for AgentFlow AI agent builder. Start free with up to 3 agents, upgrade to Pro for unlimited agents and advanced features.',
+      'Simple, transparent pricing for Vortic AI agent builder. Start free with up to 3 agents, upgrade to Pro for unlimited agents and advanced features.',
       content,
       '/pricing'
     ));
@@ -1759,7 +1759,7 @@ Sitemap: https://agentflow.replit.app/sitemap.xml`);
               <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <i data-lucide="zap" class="w-5 h-5 text-white"></i>
               </div>
-              <span class="text-xl font-bold text-primary">AgentFlow</span>
+              <span class="text-xl font-bold text-primary">Vortic</span>
             </div>
             
             <nav class="hidden md:flex items-center space-x-8">
@@ -1802,7 +1802,7 @@ Sitemap: https://agentflow.replit.app/sitemap.xml`);
                   <div>
                     <h3 class="text-xl font-semibold mb-2">Email us</h3>
                     <p class="text-muted-foreground mb-2">Get in touch for support or sales inquiries</p>
-                    <a href="mailto:hello@agentflow.dev" class="text-primary hover:underline">hello@agentflow.dev</a>
+                    <a href="mailto:hello@vortic.dev" class="text-primary hover:underline">hello@vortic.dev</a>
                   </div>
                 </div>
                 
@@ -1882,7 +1882,7 @@ Sitemap: https://agentflow.replit.app/sitemap.xml`);
                 <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                   <i data-lucide="zap" class="w-5 h-5 text-white"></i>
                 </div>
-                <span class="text-xl font-bold text-primary">AgentFlow</span>
+                <span class="text-xl font-bold text-primary">Vortic</span>
               </div>
               <p class="text-muted-foreground">
                 The no-code AI agent builder platform that makes automation accessible to everyone.
@@ -1920,7 +1920,7 @@ Sitemap: https://agentflow.replit.app/sitemap.xml`);
           </div>
           
           <div class="border-t border-border mt-12 pt-8 text-center text-muted-foreground">
-            <p>&copy; 2024 AgentFlow. All rights reserved.</p>
+            <p>&copy; 2024 Vortic. All rights reserved.</p>
           </div>
         </div>
       </footer>
@@ -1928,7 +1928,7 @@ Sitemap: https://agentflow.replit.app/sitemap.xml`);
     
     res.send(marketingHTML(
       'Contact Us', 
-      'Get in touch with the AgentFlow team. We\'re here to help with sales inquiries, technical support, and any questions about our AI agent builder platform.',
+      'Get in touch with the Vortic team. We\'re here to help with sales inquiries, technical support, and any questions about our AI agent builder platform.',
       content,
       '/contact'
     ));
@@ -2970,7 +2970,7 @@ Sitemap: https://agentflow.replit.app/sitemap.xml`);
     app.post('/api/test/rag-search', isAuthenticated, async (req, res) => {
       try {
         const { 
-          query = "What is AgentFlow?", 
+          query = "What is Vortic?", 
           knowledgeBaseId = "1e92d15e-26f8-4f32-9a29-669de638f273",
           threshold = 0.3
         } = req.body;
@@ -3029,7 +3029,7 @@ Sitemap: https://agentflow.replit.app/sitemap.xml`);
     // Test agent RAG integration endpoint (development only)
     app.post('/api/test/agent-rag', isAuthenticated, async (req, res) => {
       try {
-        const { userMessage = "What is AgentFlow?", agentId } = req.body;
+        const { userMessage = "What is Vortic?", agentId } = req.body;
         
         console.log(`🧪 Testing agent RAG integration for query: "${userMessage}"`);
         
@@ -3044,7 +3044,7 @@ Sitemap: https://agentflow.replit.app/sitemap.xml`);
             projectId: "b9882355-4895-4a2d-9efc-e0d80d8d30fc",
             name: "RAG Test Agent",
             description: "Test agent for RAG functionality",
-            systemPrompt: "You are a helpful assistant that answers questions about AgentFlow using your knowledge base.",
+            systemPrompt: "You are a helpful assistant that answers questions about Vortic using your knowledge base.",
             userTemplate: "{{input}}",
           };
           
@@ -3061,7 +3061,7 @@ Sitemap: https://agentflow.replit.app/sitemap.xml`);
         // Test the RAG-enabled agent response generation
         const { generateAgentResponse } = await import('./openaiClient');
         const response = await generateAgentResponse(
-          "You are a helpful assistant that answers questions about AgentFlow using your knowledge base.",
+          "You are a helpful assistant that answers questions about Vortic using your knowledge base.",
           userMessage,
           {},
           testAgentId

@@ -1,8 +1,8 @@
-# AgentFlow - AI Agent Builder Platform
+# Vortic - AI Agent Builder Platform
 
 ## Overview
 
-AgentFlow is a comprehensive no-code/low-code platform for building, orchestrating, and deploying multi-agent AI workflows. The platform enables users to create sophisticated agent workflows through a visual interface, connecting tools like Notion, Slack, and custom APIs. It supports both linear and complex multi-agent orchestration patterns with full traceability and observability.
+Vortic is a comprehensive no-code/low-code platform for building, orchestrating, and deploying multi-agent AI workflows. The platform enables users to create sophisticated agent workflows through a visual interface, connecting tools like Notion, Slack, and custom APIs. It supports both linear and complex multi-agent orchestration patterns with full traceability and observability.
 
 The application is designed as a full-stack TypeScript platform with React frontend, Express backend, and PostgreSQL database, supporting multiple authentication strategies and external service integrations.
 
