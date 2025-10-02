@@ -79,7 +79,7 @@ export const isAuthenticated: RequestHandler = async (req: any, res, next) => {
   }
 };
 
-export function setupAuth(app: Express) {
+export async function setupAuth(app: Express) {
   // Auth routes for debugging/health check
   app.get('/api/auth/health', (req, res) => {
     res.json({ 
@@ -92,5 +92,50 @@ export function setupAuth(app: Express) {
         name: DUMMY_USER_PAYLOAD.name
       }
     });
+  });
+
+  // Login endpoint for dummy auth
+  app.get('/api/auth/login', async (req, res) => {
+    // In dummy mode, create/update the user and return success
+    try {
+      const userData = {
+        id: DUMMY_USER_PAYLOAD.sub,
+        email: DUMMY_USER_PAYLOAD.email,
+        firstName: DUMMY_USER_PAYLOAD.given_name,
+        lastName: DUMMY_USER_PAYLOAD.family_name,
+        profileImageUrl: DUMMY_USER_PAYLOAD.picture,
+      };
+      
+      await storage.upsertUser(userData);
+      
+      res.json({
+        success: true,
+        user: {
+          id: DUMMY_USER_PAYLOAD.sub,
+          email: DUMMY_USER_PAYLOAD.email,
+          name: DUMMY_USER_PAYLOAD.name,
+          picture: DUMMY_USER_PAYLOAD.picture
+        },
+        token: 'dummy_jwt_token_for_development'
+      });
+    } catch (error) {
+      console.error('Error in login:', error);
+      res.status(500).json({ error: 'Login failed' });
+    }
+  });
+
+  // Get current user endpoint
+  app.get('/api/auth/me', isAuthenticated, (req: any, res) => {
+    res.json({
+      id: req.user.id,
+      email: req.user.email,
+      name: req.user.name,
+      picture: req.user.picture
+    });
+  });
+
+  // Logout endpoint
+  app.get('/api/auth/logout', (req, res) => {
+    res.json({ success: true, message: 'Logged out' });
   });
 }

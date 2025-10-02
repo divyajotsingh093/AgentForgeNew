@@ -32,14 +32,23 @@ export function useAuth() {
     }, 100);
   }, []);
 
-  const login = () => {
+  const login = async () => {
     setIsLoading(true);
-    setTimeout(() => {
-      setIsAuthenticated(true);
-      setUser(DUMMY_USER);
+    try {
+      const response = await fetch('/api/auth/login');
+      if (response.ok) {
+        const data = await response.json();
+        setIsAuthenticated(true);
+        setUser(data.user);
+        localStorage.setItem('vortic_auth', 'true');
+      } else {
+        console.error('Login failed');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+    } finally {
       setIsLoading(false);
-      localStorage.setItem('vortic_auth', 'true');
-    }, 500);
+    }
   };
 
   const logout = () => {
