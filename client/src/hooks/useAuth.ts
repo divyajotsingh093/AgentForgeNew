@@ -20,14 +20,16 @@ export function useAuth() {
   const [user, setUser] = useState<typeof DUMMY_USER | null>(null);
 
   useEffect(() => {
-    // Simulate loading and auto-login for dummy auth
-    const timer = setTimeout(() => {
-      setIsAuthenticated(true);
-      setUser(DUMMY_USER);
+    // Check if user was previously authenticated
+    const wasAuthenticated = localStorage.getItem('vortic_auth') === 'true';
+    
+    setTimeout(() => {
+      if (wasAuthenticated) {
+        setIsAuthenticated(true);
+        setUser(DUMMY_USER);
+      }
       setIsLoading(false);
-    }, 100); // Reduced from 500ms to 100ms for faster auth
-
-    return () => clearTimeout(timer);
+    }, 100);
   }, []);
 
   const login = () => {
@@ -36,12 +38,14 @@ export function useAuth() {
       setIsAuthenticated(true);
       setUser(DUMMY_USER);
       setIsLoading(false);
+      localStorage.setItem('vortic_auth', 'true');
     }, 500);
   };
 
   const logout = () => {
     setIsAuthenticated(false);
     setUser(null);
+    localStorage.removeItem('vortic_auth');
   };
 
   const getAccessToken = async () => {

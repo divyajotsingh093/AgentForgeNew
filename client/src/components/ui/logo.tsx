@@ -13,66 +13,71 @@ export default function Logo({ size = "md", className = "" }: { size?: "sm" | "m
         xmlns="http://www.w3.org/2000/svg"
         className="w-full h-full"
       >
-        {/* Vortex spiral design */}
         <defs>
-          <linearGradient id="vortexGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" className="text-primary" stopColor="currentColor" />
-            <stop offset="100%" className="text-secondary" stopColor="currentColor" />
+          <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style={{ stopColor: 'hsl(150, 80%, 45%)' }} />
+            <stop offset="100%" style={{ stopColor: 'hsl(180, 75%, 50%)' }} />
+          </linearGradient>
+          <linearGradient id="logoGradient2" x1="100%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style={{ stopColor: 'hsl(180, 75%, 50%)' }} />
+            <stop offset="100%" style={{ stopColor: 'hsl(150, 80%, 45%)' }} />
           </linearGradient>
         </defs>
         
-        {/* Outer spiral arc 1 */}
+        {/* Stylized V letter with geometric design */}
         <path
-          d="M50 5 A45 45 0 0 1 95 50"
-          className="stroke-primary"
-          strokeWidth="6"
+          d="M30 20 L50 65 L70 20"
+          stroke="url(#logoGradient)"
+          strokeWidth="8"
           strokeLinecap="round"
+          strokeLinejoin="round"
           fill="none"
         />
         
-        {/* Outer spiral arc 2 */}
+        {/* Inner geometric accent */}
         <path
-          d="M95 50 A45 45 0 0 1 50 95"
-          className="stroke-secondary"
-          strokeWidth="5"
-          strokeLinecap="round"
-          fill="none"
-        />
-        
-        {/* Middle spiral */}
-        <path
-          d="M50 20 A30 30 0 0 1 80 50 A30 30 0 0 1 50 80"
-          className="stroke-primary"
+          d="M38 30 L50 55 L62 30"
+          stroke="url(#logoGradient2)"
           strokeWidth="4"
           strokeLinecap="round"
+          strokeLinejoin="round"
           fill="none"
+          opacity="0.6"
         />
         
-        {/* Inner spiral */}
-        <path
-          d="M50 35 A15 15 0 0 1 65 50 A15 15 0 0 1 50 65 A15 15 0 0 1 35 50"
-          className="stroke-secondary"
-          strokeWidth="3"
-          strokeLinecap="round"
+        {/* Bottom circle/node */}
+        <circle cx="50" cy="70" r="10" fill="url(#logoGradient)" />
+        
+        {/* Small accent circles */}
+        <circle cx="30" cy="22" r="4" fill="url(#logoGradient)" />
+        <circle cx="70" cy="22" r="4" fill="url(#logoGradient2)" />
+        
+        {/* Orbital ring */}
+        <circle 
+          cx="50" 
+          cy="50" 
+          r="40" 
+          stroke="url(#logoGradient)" 
+          strokeWidth="2" 
           fill="none"
+          opacity="0.3"
         />
         
-        {/* Central core with gradient */}
-        <circle cx="50" cy="50" r="8" fill="url(#vortexGradient)" />
-        
-        {/* Animated rotating effect */}
-        <g style={{ transformOrigin: '50px 50px' }}>
-          <circle cx="50" cy="50" r="20" className="stroke-primary opacity-30" strokeWidth="2" fill="none">
-            <animateTransform
-              attributeName="transform"
-              type="rotate"
-              from="0 50 50"
-              to="360 50 50"
-              dur="3s"
-              repeatCount="indefinite"
-            />
-          </circle>
-        </g>
+        {/* Animated pulse */}
+        <circle cx="50" cy="70" r="10" fill="url(#logoGradient)" opacity="0.3">
+          <animate
+            attributeName="r"
+            values="10;14;10"
+            dur="2s"
+            repeatCount="indefinite"
+          />
+          <animate
+            attributeName="opacity"
+            values="0.3;0.1;0.3"
+            dur="2s"
+            repeatCount="indefinite"
+          />
+        </circle>
       </svg>
     </div>
   );
