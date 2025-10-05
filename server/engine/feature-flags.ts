@@ -91,14 +91,8 @@ class FeatureFlagService {
       enabled: config.enabled,
       rolloutPercentage: config.rolloutPercentage ?? 100,
       conditions: config.conditions,
-    }).onConflictDoUpdate({
+    }).onConflictDoNothing({
       target: featureFlags.key,
-      set: {
-        enabled: config.enabled,
-        rolloutPercentage: config.rolloutPercentage ?? 100,
-        conditions: config.conditions,
-        updatedAt: new Date(),
-      }
     });
 
     this.clearCache();
