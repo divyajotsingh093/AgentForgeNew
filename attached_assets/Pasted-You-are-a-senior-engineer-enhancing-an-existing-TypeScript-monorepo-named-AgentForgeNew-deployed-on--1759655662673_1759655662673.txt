@@ -1,0 +1,255 @@
+You are a senior engineer enhancing an existing TypeScript monorepo named AgentForgeNew deployed on Replit.
+
+## Objective
+Implement a production-ready agent platform with:
+- **LangGraph** as the execution spine (sequential now; parallel/branch-ready)
+- **Policy Engine** (latency/cost/quality/PII/fallbacks)
+- **Telemetry + Evaluators + Planner v1** (learning loop)
+- **Skill Registry** (reusable prompts/schemas with quality stats)
+- **MCP Hub** (client + server)
+- A working **Meeting → Actions** flow as demo
+
+## Tech
+TypeScript (ESM), Node 20+, @langchain/langgraph, zod, openai, pino, dotenv, yaml, drizzle/sqlite (or existing DB), vitest.
+
+## Repo assumptions
+Monorepo layout:
+- client/  (React/Vite UI)
+- server/  (Node/TS backend)
+- shared/  (optional)
+- flows/, policies/ (we will add)
+
+Create/modify the following files with working code, comments, and TODOs where needed.
+
+------------------------------------------------------------
+1) package.json (root) — add deps & scripts
+------------------------------------------------------------
+- Add deps: "@langchain/langgraph", "zod", "openai", "pino", "dotenv", "yaml"
+- Keep your db libs (drizzle/whatever you already use)
+- Scripts:
+  "dev": "tsx watch server/index.ts",
+  "build": "tsc",
+  "start": "node dist/server/index.js",
+  "test": "vitest run"
+
+------------------------------------------------------------
+2) .env.example
+------------------------------------------------------------
+OPENAI_API_KEY=
+NOTION_API_KEY=
+NOTION_DB_ID=
+DATABASE_URL=file:./agentforge.db
+
+------------------------------------------------------------
+3) /flows/meeting_actions.json (FlowDef v1)
+------------------------------------------------------------
+{
+  "name": "Meeting → Actions",
+  "inputs": { "transcript": "string", "audioUrl": "string", "export": "string" },
+  "steps": [
+    { "kind": "agent", "name": "transcriber",
+      "in": {"transcript":"$.transcript","audioUrl":"$.audioUrl"},
+      "out": {"transcript":"$.transcript"},
+      "policy": {"timeoutMs": 30000, "maxRetries": 1}
+    },
+    { "kind": "agent", "name": "summariser",
+      "in": {"transcript":"$.transcript"},
+      "out": {"summary":"$.summary","decisions":"$.decisions","openQuestions":"$.openQuestions"}
+    },
+    { "kind": "agent", "name": "actionExtractor",
+      "in": {"transcript":"$.transcript","summary":"$.summary"},
+      "out": {"actions":"$.actions"}
+    },
+    { "kind": "tool", "name": "notion.export",
+      "condition": "$.export == 'notion'",
+      "args": {"databaseId":"env.NOTION_DB_ID","tasks":"$.actions"}
+    },
+    { "kind": "agent", "name": "publisher",
+      "in": {"summary":"$.summary","actions":"$.actions","export":"$.export"},
+      "out": {"report":"$.report","exportResult":"$.exportResult"}
+    }
+  ]
+}
+
+------------------------------------------------------------
+4) /policies/meeting_actions.yaml (Policy Contract)
+------------------------------------------------------------
+objective: "Extract decisions and action items and export to Notion"
+constraints:
+  max_latency_ms: 60000
+  max_cost_usd: 0.05
+  pii_masking: true
+slo:
+  action_recall: 0.9
+  hallucination_rate: 0.02
+fallbacks:
+  on_export_fail: "copy_to_clipboard"
+  on_llm_timeout: "retry_then_summarize_only"
+guards:
+  disallowed_tools: []
+model_routing:
+  default: "gpt-4o-mini"
+  large_escalation: "gpt-4.1"
+
+------------------------------------------------------------
+5) server/index.ts (entry point)
+------------------------------------------------------------
+- Load dotenv
+- Initialize DB/Drizzle
+- Import logging helper
+- Load FlowDef from flows/meeting_actions.json
+- Load Policy YAML
+- Build registry (agents + tools)
+- Build graph with buildGraph()
+- Run runFlow() with a small canned transcript
+- Print final report, export result (if Notion env present)
+- Start minimal HTTP (e.g., /run for client calls)
+
+------------------------------------------------------------
+6) server/engine/types.ts
+------------------------------------------------------------
+- Define:
+  type Context = Record<string, any>
+  interface Policy { timeoutMs?: number; maxRetries?: number }
+  interface StepNode { kind: "agent"|"tool"; name: string; in?: any; out?: any; condition?: string; policy?: Policy; args?: any }
+  interface FlowDef { name: string; inputs: Record<string,string>; steps: StepNode[] }
+  interface EngineOptions { sessionId?: string }
+  interface RunResult { ok: boolean; context: Context; errors?: any[] }
+- Tool interface:
+  interface Tool { name: string; argsSchema: z.ZodTypeAny; invoke(args: unknown, ctx: Context): Promise<{ok:true,data:any}|{ok:false,error:string}> }
+- Agent interface:
+  interface Agent { name: string; schemaIn: z.ZodTypeAny; schemaOut: z.ZodTypeAny; system: string; run(input: any, ctx: Context): Promise<any> }
+
+------------------------------------------------------------
+7) server/engine/log.ts
+------------------------------------------------------------
+- pino wrapper: logEvent({ level, tags, message, payload })
+- Always include tags: session, type(agent|tool|policy), name, step
+
+------------------------------------------------------------
+8) server/engine/graph.ts (LangGraph builder)
+------------------------------------------------------------
+- export function buildGraph(flow: FlowDef, registry: Registry): StateGraph
+- Create a StateGraph; for each step:
+  - node fn loads inputs from context (JSONPath-like basic resolver)
+  - if kind=agent: validate with agent.schemaIn; call agent.run(); validate agent.schemaOut; merge outputs into context
+  - if kind=tool: resolve args (env.* → process.env; $.path → context); call tool.invoke(); write results under sensible key
+  - evaluate "condition" before execution (simple expression evaluator)
+  - emit log events node_start/node_success/node_error
+- (Prepare structure for future parallel groups but keep v1 sequential)
+
+------------------------------------------------------------
+9) server/engine/runtime.ts
+------------------------------------------------------------
+- export async function runFlow(flow: FlowDef, initial: Context, opts: EngineOptions): Promise<RunResult>
+- Create graph via buildGraph()
+- Implement retries per step (policy.maxRetries), timeout (policy.timeoutMs)
+- After each node, persist checkpoint: runId, stepIdx, contextJson, status, ts
+- Return final context
+
+------------------------------------------------------------
+10) server/engine/checkpoints.ts
+------------------------------------------------------------
+- Drizzle tables:
+  runs(id TEXT pk, flow TEXT, status TEXT, started_at DATETIME, finished_at DATETIME)
+  run_checkpoints(run_id TEXT, step_idx INTEGER, status TEXT, context_json TEXT, created_at DATETIME)
+- Functions: startRun(flowName) -> runId; saveCheckpoint(runId, stepIdx, status, context); finishRun(runId, status)
+
+------------------------------------------------------------
+11) server/policy/schema.ts + evaluator.ts
+------------------------------------------------------------
+- schema.ts: zod schema for Policy Contract; loader for YAML
+- evaluator.ts:
+  - wrapNode(nodeFn, policy): times execution, counts tokens/cost if provided, enforces constraints
+  - on violation: log [policy:violation], execute fallback behavior when configured
+  - export function maskPII(text) if pii_masking is true (simple regex for emails/phones)
+
+------------------------------------------------------------
+12) server/learn/telemetry.ts + evaluators.ts + planner.ts
+------------------------------------------------------------
+- telemetry.ts: write per-step metrics {runId, step, model, tokens, cost_usd, latency_ms, success, export_ok, edits_count?}
+- evaluators.ts:
+  - evaluateActionsRecall(gold, predicted) -> number (0-1)
+  - hallucinationRate(context, output) -> number (stub with judge prompt support later)
+- planner.ts:
+  - chooseModel(step, stats, policy): default small; if last N runs recall < target, escalate to policy.model_routing.large_escalation
+  - chooseTool(step, stats): return default (stub)
+  - Expose hooks used by agents/tools before execution
+
+------------------------------------------------------------
+13) server/skills/registry.ts + catalog.json
+------------------------------------------------------------
+- registry.ts: getSkill(id, version?), listSkills(), upsertSkill()
+- catalog.json seeds:
+  - summarize_meeting_v1 (prompt, schemaIn/out)
+  - extract_actions_v1 (prompt, schemaIn/out, metrics placeholder)
+- Agents read their prompt/schema from registry by skillId
+
+------------------------------------------------------------
+14) server/agents/transcriber.ts, summariser.ts, actionExtractor.ts, publisher.ts
+------------------------------------------------------------
+- Each exports createAgent(): Agent
+- Use OpenAI client; enforce strict JSON outputs via zod
+- summariser: returns { summary: string, decisions: string[], openQuestions: string[] }
+- actionExtractor: returns { actions: Array<{ owner: string, task: string, due?: string, priority: "High"|"Medium"|"Low", notes?: string }> }
+- publisher: assembles report markdown; if export='notion', expects tool result pointer
+
+------------------------------------------------------------
+15) server/tools/notion.ts, speech.ts, slack.ts
+------------------------------------------------------------
+- notion.export tool: args { databaseId: string, tasks: Task[] } → create pages/rows; return { ids: string[], url?: string }
+- speech.to_text: stub returns canned transcript if audioUrl present & no ASR
+- slack.post_message: optional, not used in first run
+
+------------------------------------------------------------
+16) server/mcp/server.ts, client.ts, mcp.json
+------------------------------------------------------------
+- server.ts: expose two MCP tools: export_notion (wraps notion.export) and generate_slides (stub returns a slides:// URL+id)
+- client.ts: invokeMcp(toolName, args) → {ok, data|error}
+- mcp.json: manifest listing these tools and a sample resource
+
+------------------------------------------------------------
+17) server/registry.ts
+------------------------------------------------------------
+- Central registry for agents/tools:
+  registerAgent(name, def), registerTool(name, def), resolve(name)
+- Pre-register transcriber, summariser, actionExtractor, publisher, tools: notion.export, speech.to_text
+
+------------------------------------------------------------
+18) client (minimal Run Console)
+------------------------------------------------------------
+- Page to paste transcript, select export (none|notion), click Run
+- Show: Summary, Action table, Export confirmation, Policy status (green/yellow/red), latency/cost badges
+- Endpoint: POST /run (server executes flow and returns context)
+
+------------------------------------------------------------
+19) tests/test.e2e.spec.ts (vitest)
+------------------------------------------------------------
+- Load meeting_actions.json; run with canned transcript
+- Assert non-empty summary, ≥1 action
+- If NOTION_* env present, assert an export attempt and an id/url in result
+- Assert checkpoints count ≥ number of steps
+
+------------------------------------------------------------
+20) README.md
+------------------------------------------------------------
+- Quick start (Replit): set .env, npm i, npm run dev, visit client, try sample
+- How to add new agent/tool; how to add a new FlowDef; how to attach a Policy
+- Notes on planner, skills, MCP usage
+- Roadmap: parallelism, human-in-loop, replay UI
+
+------------------------------------------------------------
+Acceptance Criteria
+------------------------------------------------------------
+1) npm run dev executes Meeting → Actions end-to-end and prints a final report.
+2) Checkpoints are written per step; run visible in DB.
+3) Logs show tags [session][agent|tool][step][policy].
+4) Policy violations (simulated delay) trigger fallback & a log event.
+5) If NOTION env is set, notion.export returns ids/url and publisher confirms.
+6) tests/test.e2e.spec.ts passes.
+
+IMPORTANT:
+- Keep v1 sequential; structure graph.ts for future parallel groups.
+- Enforce zod schemas in every agent/tool call; strict JSON parsing from LLM.
+- Never log secrets; use process.env for creds.
+- Keep code idiomatic, well-commented, and runnable on Replit immediately.
