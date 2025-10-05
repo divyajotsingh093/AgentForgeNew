@@ -41,12 +41,49 @@ Preferred communication style: Simple, everyday language.
 - **Runs**: Execution instances with full logging and traceability
 - **Templates**: Reusable workflow patterns for quick instantiation
 
-### Execution Engine
-- **Sequential Processing**: Linear flow execution with step-by-step progression
-- **Context Management**: Persistent context passing between workflow steps
+### Execution Engine (Dual-Engine Architecture)
+- **Legacy Engine**: Sequential flow execution with step-by-step progression (default for existing projects)
+- **LangGraph Engine**: Advanced StateGraph-based execution supporting parallel, conditional, and looped workflows
+- **Feature Flag System**: Granular control over engine selection and feature rollout per project
+- **Engine Selector**: Intelligent routing between engines based on flow complexity and feature enablement
+- **Context Management**: Persistent context passing between workflow steps with full state checkpointing
 - **Error Handling**: Comprehensive error recovery and retry mechanisms
 - **Logging System**: Multi-dimensional logging with session, agent, step, tool, and MCP tagging
 - **Real-time Monitoring**: WebSocket-based live execution monitoring
+- **Checkpoint/Replay**: Full state persistence enabling time-travel debugging and workflow replay
+
+### Policy Engine (Enterprise Controls)
+- **Policy Rules**: Project-level policies defining SLOs, constraints, and fallback strategies
+- **Cost Management**: Automatic tracking and enforcement of per-run cost limits
+- **Latency SLOs**: Maximum execution time constraints with fallback handling
+- **Quality Gates**: Minimum quality score requirements (action recall, hallucination rate, etc.)
+- **PII Masking**: Automatic detection and masking of personally identifiable information
+- **Guard Rails**: Disallowed tool restrictions, required human approvals, sensitive data protection
+- **Model Routing**: Intelligent selection between cost-effective and high-performance models
+- **Policy Evaluations**: Complete audit trail of policy enforcement and violations
+
+### Telemetry & Learning Loop (Self-Improving AI)
+- **Run Metrics**: Detailed capture of tokens, cost, latency, model used, and quality scores per step
+- **Evaluator Service**: Automated measurement of action recall, precision, hallucination rate
+- **Intelligent Planner**: Learns from execution history to optimize model and tool selection
+- **Cost Optimization**: Automatic escalation to larger models only when small models fail quality targets
+- **Performance Tracking**: Real-time dashboards showing SLO compliance, cost trends, quality metrics
+- **A/B Testing**: Compare different prompts, models, and configurations with statistical significance
+
+### Skills Registry (Reusable Capabilities)
+- **Skill Catalog**: Centralized repository of versioned agent prompts and schemas
+- **Quality Metrics**: Each skill tracks success rate, average cost, latency, and quality scores
+- **Versioning**: Semantic versioning with changelog and deprecation support
+- **Marketplace**: Public/private skill sharing for rapid workflow composition
+- **Usage Analytics**: Track which skills are most used and highest performing
+- **Smart Composition**: Build new agents by combining proven skill components
+
+### MCP Protocol Integration (Unlimited Extensibility)
+- **MCP Server**: Expose Vortic flows and tools as MCP resources for external consumption
+- **MCP Client**: Allow Vortic agents to invoke any MCP-compatible tool
+- **Credential Management**: Secure handling of authentication for external MCP services
+- **Tool Discovery**: Automatic detection and registration of MCP capabilities
+- **Bidirectional Integration**: Both provide and consume MCP services
 
 ### Knowledge Management
 - **Vector Embeddings**: OpenAI text-embedding-3-small for semantic search capabilities

@@ -4,6 +4,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedAllTemplates } from "./seedTemplates";
 import { setupWebSocketServer } from "./websocket";
+import { initializeFeatureFlags } from "./engine/feature-flags.js";
 
 const app = express();
 app.use(express.json());
@@ -47,6 +48,15 @@ app.use((req, res, next) => {
     console.log('✅ Template seeding completed');
   } catch (error) {
     console.warn('⚠️ Template seeding failed, continuing without seeding:', error);
+  }
+
+  // Initialize feature flags
+  try {
+    console.log('🚩 Initializing feature flags...');
+    await initializeFeatureFlags();
+    console.log('✅ Feature flags initialized');
+  } catch (error) {
+    console.warn('⚠️ Feature flag initialization failed, continuing without flags:', error);
   }
 
   const server = createServer(app);

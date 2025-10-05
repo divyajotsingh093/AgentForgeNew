@@ -317,6 +317,140 @@ export const formDefinitions = pgTable("form_definitions", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Policy Engine Tables
+export const policyRules = pgTable("policy_rules", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  name: text("name").notNull(),
+  description: text("description"),
+  objective: text("objective"), // what the policy aims to achieve
+  constraints: jsonb("constraints").notNull(), // max_latency_ms, max_cost_usd, pii_masking, etc.
+  slo: jsonb("slo"), // service level objectives (action_recall, hallucination_rate, etc.)
+  fallbacks: jsonb("fallbacks"), // fallback strategies on policy violation
+  guards: jsonb("guards"), // disallowed tools, required approvals, etc.
+  modelRouting: jsonb("model_routing"), // model selection rules (default, large_escalation, etc.)
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const policyEvaluations = pgTable("policy_evaluations", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  runId: uuid("run_id").notNull().references(() => runs.id, { onDelete: 'cascade' }),
+  policyRuleId: uuid("policy_rule_id").notNull().references(() => policyRules.id, { onDelete: 'cascade' }),
+  stepIdx: integer("step_idx"),
+  evaluationType: text("evaluation_type").notNull(), // latency|cost|quality|pii|guard
+  passed: boolean("passed").notNull(),
+  actualValue: jsonb("actual_value"), // measured value
+  expectedValue: jsonb("expected_value"), // policy threshold
+  violationDetails: jsonb("violation_details"), // what went wrong
+  fallbackApplied: text("fallback_applied"), // which fallback was triggered
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Telemetry & Learning Tables
+export const runMetrics = pgTable("run_metrics", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  runId: uuid("run_id").notNull().references(() => runs.id, { onDelete: 'cascade' }),
+  stepIdx: integer("step_idx"),
+  stepName: text("step_name"),
+  kind: text("kind"), // agent|tool
+  model: text("model"), // which LLM model was used
+  tokens: jsonb("tokens"), // {prompt, completion, total}
+  costUsd: text("cost_usd"), // decimal as text for precision
+  latencyMs: integer("latency_ms"),
+  success: boolean("success").notNull(),
+  qualityScore: text("quality_score"), // decimal 0-1
+  metadata: jsonb("metadata"), // additional metrics (recall, precision, hallucination, etc.)
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Skills Registry Tables
+export const skills = pgTable("skills", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  category: text("category"), // summarization|extraction|transformation|validation|etc
+  description: text("description"),
+  tags: jsonb("tags"), // array of tags for discovery
+  isPublic: boolean("is_public").default(false),
+  authorId: varchar("author_id").references(() => users.id),
+  usageCount: integer("usage_count").default(0),
+  avgQualityScore: text("avg_quality_score"), // aggregated from runs
+  avgCostUsd: text("avg_cost_usd"), // average cost per execution
+  avgLatencyMs: integer("avg_latency_ms"), // average execution time
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const skillVersions = pgTable("skill_versions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  skillId: uuid("skill_id").notNull().references(() => skills.id, { onDelete: 'cascade' }),
+  version: text("version").notNull(), // semver (1.0.0, 1.1.0, etc.)
+  systemPrompt: text("system_prompt").notNull(),
+  userTemplate: text("user_template"),
+  fewShots: text("few_shots"),
+  inputSchema: jsonb("input_schema"), // zod schema as JSON
+  outputSchema: jsonb("output_schema"), // zod schema as JSON
+  config: jsonb("config"), // temperature, model preferences, etc.
+  changelog: text("changelog"), // what changed in this version
+  isDeprecated: boolean("is_deprecated").default(false),
+  deprecationNote: text("deprecation_note"),
+  usageCount: integer("usage_count").default(0),
+  qualityMetrics: jsonb("quality_metrics"), // version-specific quality stats
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// MCP Protocol Tables
+export const mcpConfigurations = pgTable("mcp_configurations", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  name: text("name").notNull(),
+  description: text("description"),
+  role: text("role").notNull(), // server|client
+  endpoint: text("endpoint"), // for client connections
+  capabilities: jsonb("capabilities"), // supported operations
+  resources: jsonb("resources"), // exposed/accessible resources
+  authConfig: jsonb("auth_config"), // authentication setup
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const mcpTools = pgTable("mcp_tools", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  mcpConfigId: uuid("mcp_config_id").notNull().references(() => mcpConfigurations.id, { onDelete: 'cascade' }),
+  name: text("name").notNull(),
+  description: text("description"),
+  inputSchema: jsonb("input_schema").notNull(),
+  outputSchema: jsonb("output_schema"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Feature Flags for Dual-Engine Support
+export const featureFlags = pgTable("feature_flags", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  key: text("key").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description"),
+  enabled: boolean("enabled").default(false),
+  rolloutPercentage: integer("rollout_percentage").default(0), // 0-100
+  conditions: jsonb("conditions"), // targeting rules
+  metadata: jsonb("metadata"), // additional config
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const projectFeatureFlags = pgTable("project_feature_flags", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  featureFlagId: uuid("feature_flag_id").notNull().references(() => featureFlags.id, { onDelete: 'cascade' }),
+  enabled: boolean("enabled").notNull(), // override global setting
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   projects: many(projects),
@@ -495,6 +629,78 @@ export const formDefinitionsRelations = relations(formDefinitions, ({ one }) => 
   }),
 }));
 
+// Policy Engine relations
+export const policyRulesRelations = relations(policyRules, ({ one, many }) => ({
+  project: one(projects, {
+    fields: [policyRules.projectId],
+    references: [projects.id],
+  }),
+  policyEvaluations: many(policyEvaluations),
+}));
+
+export const policyEvaluationsRelations = relations(policyEvaluations, ({ one }) => ({
+  run: one(runs, {
+    fields: [policyEvaluations.runId],
+    references: [runs.id],
+  }),
+  policyRule: one(policyRules, {
+    fields: [policyEvaluations.policyRuleId],
+    references: [policyRules.id],
+  }),
+}));
+
+// Telemetry relations
+export const runMetricsRelations = relations(runMetrics, ({ one }) => ({
+  run: one(runs, {
+    fields: [runMetrics.runId],
+    references: [runs.id],
+  }),
+}));
+
+// Skills Registry relations
+export const skillsRelations = relations(skills, ({ one, many }) => ({
+  author: one(users, {
+    fields: [skills.authorId],
+    references: [users.id],
+  }),
+  versions: many(skillVersions),
+}));
+
+export const skillVersionsRelations = relations(skillVersions, ({ one }) => ({
+  skill: one(skills, {
+    fields: [skillVersions.skillId],
+    references: [skills.id],
+  }),
+}));
+
+// MCP Protocol relations
+export const mcpConfigurationsRelations = relations(mcpConfigurations, ({ one, many }) => ({
+  project: one(projects, {
+    fields: [mcpConfigurations.projectId],
+    references: [projects.id],
+  }),
+  tools: many(mcpTools),
+}));
+
+export const mcpToolsRelations = relations(mcpTools, ({ one }) => ({
+  mcpConfig: one(mcpConfigurations, {
+    fields: [mcpTools.mcpConfigId],
+    references: [mcpConfigurations.id],
+  }),
+}));
+
+// Feature Flags relations
+export const projectFeatureFlagsRelations = relations(projectFeatureFlags, ({ one }) => ({
+  project: one(projects, {
+    fields: [projectFeatureFlags.projectId],
+    references: [projects.id],
+  }),
+  featureFlag: one(featureFlags, {
+    fields: [projectFeatureFlags.featureFlagId],
+    references: [featureFlags.id],
+  }),
+}));
+
 // LangGraph table relations
 export const runCheckpointsRelations = relations(runCheckpoints, ({ one }) => ({
   run: one(runs, {
@@ -649,6 +855,60 @@ export const insertMemorySchema = createInsertSchema(memory).omit({
   updatedAt: true,
 });
 
+// Policy Engine insert schemas
+export const insertPolicyRuleSchema = createInsertSchema(policyRules).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPolicyEvaluationSchema = createInsertSchema(policyEvaluations).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Telemetry insert schemas
+export const insertRunMetricSchema = createInsertSchema(runMetrics).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Skills Registry insert schemas
+export const insertSkillSchema = createInsertSchema(skills).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSkillVersionSchema = createInsertSchema(skillVersions).omit({
+  id: true,
+  createdAt: true,
+});
+
+// MCP Protocol insert schemas
+export const insertMcpConfigurationSchema = createInsertSchema(mcpConfigurations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertMcpToolSchema = createInsertSchema(mcpTools).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Feature Flags insert schemas
+export const insertFeatureFlagSchema = createInsertSchema(featureFlags).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertProjectFeatureFlagSchema = createInsertSchema(projectFeatureFlags).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type UpsertUser = z.infer<typeof upsertUserSchema>;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -705,3 +965,31 @@ export type InsertRunCheckpoint = z.infer<typeof insertRunCheckpointSchema>;
 export type RunCheckpoint = typeof runCheckpoints.$inferSelect;
 export type InsertMemory = z.infer<typeof insertMemorySchema>;
 export type Memory = typeof memory.$inferSelect;
+
+// Policy Engine types
+export type InsertPolicyRule = z.infer<typeof insertPolicyRuleSchema>;
+export type PolicyRule = typeof policyRules.$inferSelect;
+export type InsertPolicyEvaluation = z.infer<typeof insertPolicyEvaluationSchema>;
+export type PolicyEvaluation = typeof policyEvaluations.$inferSelect;
+
+// Telemetry types
+export type InsertRunMetric = z.infer<typeof insertRunMetricSchema>;
+export type RunMetric = typeof runMetrics.$inferSelect;
+
+// Skills Registry types
+export type InsertSkill = z.infer<typeof insertSkillSchema>;
+export type Skill = typeof skills.$inferSelect;
+export type InsertSkillVersion = z.infer<typeof insertSkillVersionSchema>;
+export type SkillVersion = typeof skillVersions.$inferSelect;
+
+// MCP Protocol types
+export type InsertMcpConfiguration = z.infer<typeof insertMcpConfigurationSchema>;
+export type McpConfiguration = typeof mcpConfigurations.$inferSelect;
+export type InsertMcpTool = z.infer<typeof insertMcpToolSchema>;
+export type McpTool = typeof mcpTools.$inferSelect;
+
+// Feature Flags types
+export type InsertFeatureFlag = z.infer<typeof insertFeatureFlagSchema>;
+export type FeatureFlag = typeof featureFlags.$inferSelect;
+export type InsertProjectFeatureFlag = z.infer<typeof insertProjectFeatureFlagSchema>;
+export type ProjectFeatureFlag = typeof projectFeatureFlags.$inferSelect;
