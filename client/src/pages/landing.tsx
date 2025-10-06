@@ -183,7 +183,7 @@ export default function Landing() {
             </p>
             <Button 
               size="lg"
-              onClick={() => login()}
+              onClick={() => setLocation("/auth")}
               className="bg-primary text-primary-foreground px-8 py-3 text-lg hover:opacity-90"
               data-testid="button-start-building"
             >
