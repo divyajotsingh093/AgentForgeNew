@@ -31,7 +31,7 @@ function AppRouter() {
   }, [getAccessToken]);
 
   return (
-    <Router base="/app">
+    <Router>
       <Switch>
         {isLoading || !isAuthenticated ? (
           <>
