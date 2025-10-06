@@ -41,6 +41,7 @@ function AppRouter() {
         ) : (
           <>
             <Route path="/" component={Dashboard} />
+            <Route path="/dashboard" component={Dashboard} />
             <Route path="/flows" component={Flows} />
             <Route path="/flow-builder/:id?" component={FlowBuilder} />
             <Route path="/agent-builder/:id?" component={AgentBuilder} />
