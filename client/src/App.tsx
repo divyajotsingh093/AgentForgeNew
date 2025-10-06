@@ -23,29 +23,23 @@ import NotFound from "@/pages/not-found";
 function AppRouter() {
   const { isAuthenticated, isLoading, getAccessToken } = useAuth();
 
+  // Set up token getter for API calls
   useEffect(() => {
     if (getAccessToken) {
       setTokenGetter(getAccessToken);
     }
   }, [getAccessToken]);
 
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <Router>
       <Switch>
+        {/* Auth route is always available */}
         <Route path="/auth" component={Auth} />
-        {!isAuthenticated ? (
-          <Route path="/" component={Landing} />
+        
+        {isLoading || !isAuthenticated ? (
+          <>
+            <Route path="/" component={Landing} />
+          </>
         ) : (
           <>
             <Route path="/" component={Dashboard} />
